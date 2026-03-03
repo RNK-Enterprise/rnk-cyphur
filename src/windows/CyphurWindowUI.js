@@ -80,7 +80,7 @@ export class CyphurWindowUI {
                 const img = btn.querySelector('img');
                 btn.addEventListener('mousedown', () => {
                     if (img) img.src = img.dataset.active;
-                    Utils.playUISound(UI_SOUNDS.buttonPress);
+                    Utils.playUISound(UI_SOUNDS.closeWindow);
                 });
                 btn.addEventListener('mouseup', () => {
                     if (img) img.src = img.dataset.default;
