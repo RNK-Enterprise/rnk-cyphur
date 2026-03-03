@@ -15,17 +15,20 @@
         "module",
         "cyberpunk"
     ],
-    "author": "Odinn <Asgardinnovations@protonmail.com>",
+    "author": "RNK Enterprise <dev@rnkenterprise.com>",
     "license": "Proprietary",
     "repository": {
         "type": "git",
-        "url": "https://github.com/Odinn-1982/rnk-cyphur.git"
+        "url": "https://github.com/RNK-Enterprise/rnk-cyphur.git"
     },
     "bugs": {
-        "url": "https://github.com/Odinn-1982/rnk-cyphur/issues"
+        "url": "https://github.com/RNK-Enterprise/rnk-cyphur/issues"
     },
-    "homepage": "https://github.com/Odinn-1982/rnk-cyphur#readme",
+    "homepage": "https://github.com/RNK-Enterprise/rnk-cyphur#readme",
     "devDependencies": {
-        "eslint": "^8.56.0"
+        "eslint": "^8.57.1"
+    },
+    "overrides": {
+        "minimatch": ">=3.1.4"
     }
 }
