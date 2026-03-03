@@ -176,6 +176,13 @@
     border-radius: 50%;
 }
 
+/* Hide any native Foundry close button that wasn't replaced with the custom icon */
+.cyphur-window .window-header .header-button.close:not(:has(.close-icon)),
+.cyphur-window .window-header .header-control.close:not(:has(.close-icon)),
+.cyphur-window .window-header button[data-action="close"]:not(:has(.close-icon)) {
+    display: none !important;
+}
+
 /* Window Content */
 .cyphur-window .window-content {
     padding: var(--cyphur-spacing-md);

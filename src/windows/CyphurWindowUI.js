@@ -68,15 +68,21 @@ export class CyphurWindowUI {
         windowElement.style.border = '2px solid #ffffff';
         windowElement.style.outline = 'none';
 
-        // Replace close button icon with No.png image
-        const closeBtn = windowElement.querySelector('.header-control.close') ||
-                         windowElement.querySelector('.header-button.close') ||
-                         windowElement.querySelector('button[data-action="close"]');
-        if (closeBtn && !closeBtn._btnImgSetup) {
-            closeBtn.innerHTML = '<img class="btn-icon close-icon" src="modules/rnk-cyphur/icons/No.png" data-default="modules/rnk-cyphur/icons/No.png" data-active="modules/rnk-cyphur/icons/No_on.png" alt="Close">';
-            closeBtn.addEventListener('click', () => {
-                Utils.playUISound(UI_SOUNDS.closeWindow);
-            }, { capture: true });
+        // Replace close button icon with No.png image; hide any additional native close buttons
+        const allCloseBtns = Array.from(windowElement.querySelectorAll(
+            '.header-control.close, .header-button.close, button[data-action="close"]'
+        ));
+        let closeBtnReplaced = false;
+        for (const btn of allCloseBtns) {
+            if (!closeBtnReplaced && !btn._btnImgSetup) {
+                btn.innerHTML = '<img class="btn-icon close-icon" src="modules/rnk-cyphur/icons/No.png" data-default="modules/rnk-cyphur/icons/No.png" data-active="modules/rnk-cyphur/icons/No_on.png" alt="Close">';
+                btn.addEventListener('click', () => {
+                    Utils.playUISound(UI_SOUNDS.closeWindow);
+                }, { capture: true });
+                closeBtnReplaced = true;
+            } else if (closeBtnReplaced) {
+                btn.style.display = 'none';
+            }
         }
 
         // Set up pressed state image swaps for all buttons with data-default/data-active images
