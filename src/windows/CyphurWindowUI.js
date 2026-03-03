@@ -77,9 +77,17 @@ export class CyphurWindowUI {
             if (!closeBtnReplaced) {
                 btn.innerHTML = '<img class="btn-icon close-icon" src="modules/rnk-cyphur/icons/No.png" data-default="modules/rnk-cyphur/icons/No.png" data-active="modules/rnk-cyphur/icons/No_on.png" alt="Close">';
                 btn.classList.add('cyphur-close-btn');
-                btn.addEventListener('click', () => {
-                    Utils.playUISound(UI_SOUNDS.closeWindow);
-                }, { capture: true });
+                const img = btn.querySelector('img');
+                btn.addEventListener('mousedown', () => {
+                    if (img) img.src = img.dataset.active;
+                    Utils.playUISound(UI_SOUNDS.buttonPress);
+                });
+                btn.addEventListener('mouseup', () => {
+                    if (img) img.src = img.dataset.default;
+                });
+                btn.addEventListener('mouseleave', () => {
+                    if (img) img.src = img.dataset.default;
+                });
                 btn._btnImgSetup = true;
                 closeBtnReplaced = true;
             } else {
