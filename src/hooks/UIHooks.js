@@ -2,8 +2,9 @@
  * RNK Cyphur - UI Interaction Hooks
  */
 import { UIManager } from '../UIManager.js';
-import { MODULE_ID } from '../Constants.js';
+import { MODULE_ID, UI_SOUNDS } from '../Constants.js';
 import { CyphurWindowUI } from '../windows/CyphurWindowUI.js';
+import { Utils } from '../Utils.js';
 
 export class UIHooks {
     static register() {
@@ -47,14 +48,14 @@ export class UIHooks {
                     title: 'Open Cyphur Hub',
                     icon: 'fas fa-comments',
                     button: true,
-                    onClick: () => UIManager.openPlayerHub()
+                    onClick: () => { Utils.playUISound(UI_SOUNDS.buttonPress); UIManager.openPlayerHub(); }
                 },
                 {
                     name: 'newChat',
                     title: 'New Private Chat',
                     icon: 'fas fa-plus',
                     button: true,
-                    onClick: () => UIHooks._showNewChatDialog()
+                    onClick: () => { Utils.playUISound(UI_SOUNDS.buttonPress); UIHooks._showNewChatDialog(); }
                 }
             ];
 
@@ -65,14 +66,14 @@ export class UIHooks {
                         title: 'GM Monitor',
                         icon: 'fas fa-eye',
                         button: true,
-                        onClick: () => UIManager.openGMMonitor()
+                        onClick: () => { Utils.playUISound(UI_SOUNDS.buttonPress); UIManager.openGMMonitor(); }
                     },
                     {
                         name: 'gmMod',
                         title: 'GM Moderation',
                         icon: 'fas fa-shield-alt',
                         button: true,
-                        onClick: () => UIManager.openGMModWindow()
+                        onClick: () => { Utils.playUISound(UI_SOUNDS.buttonPress); UIManager.openGMModWindow(); }
                     }
                 );
             }
