@@ -176,11 +176,16 @@
     border-radius: 50%;
 }
 
-/* Hide all native Foundry header controls — only show our explicitly marked custom close button */
-.cyphur-window .window-header button:not(.cyphur-close-btn),
-.cyphur-window .window-header a.header-button:not(.cyphur-close-btn),
-.cyphur-window .window-header .header-control:not(.cyphur-close-btn) {
+/* Suppress the FontAwesome xmark pseudo-element on the close button — our No.png image replaces it */
+.cyphur-window .window-header [data-action="close"]::before,
+.cyphur-window .window-header [data-action="close"]::after {
+    content: none !important;
     display: none !important;
+}
+
+/* Zero out font-size so any residual FA icon text doesn't render */
+.cyphur-window .window-header [data-action="close"] {
+    font-size: 0 !important;
 }
 
 /* Window Content */
