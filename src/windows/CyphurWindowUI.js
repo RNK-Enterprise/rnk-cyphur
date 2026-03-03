@@ -68,20 +68,32 @@ export class CyphurWindowUI {
         windowElement.style.border = '2px solid #ffffff';
         windowElement.style.outline = 'none';
 
-        // Replace close button icon with No.png image; hide any additional native close buttons
+        // Replace close button icon with No.png image
         const allCloseBtns = Array.from(windowElement.querySelectorAll(
-            '.header-control.close, .header-button.close, button[data-action="close"]'
+            '.header-control.close, .header-button.close, button[data-action="close"], button.close'
         ));
         let closeBtnReplaced = false;
         for (const btn of allCloseBtns) {
-            if (!closeBtnReplaced && !btn._btnImgSetup) {
+            if (!closeBtnReplaced) {
                 btn.innerHTML = '<img class="btn-icon close-icon" src="modules/rnk-cyphur/icons/No.png" data-default="modules/rnk-cyphur/icons/No.png" data-active="modules/rnk-cyphur/icons/No_on.png" alt="Close">';
+                btn.classList.add('cyphur-close-btn');
                 btn.addEventListener('click', () => {
                     Utils.playUISound(UI_SOUNDS.closeWindow);
                 }, { capture: true });
+                btn._btnImgSetup = true;
                 closeBtnReplaced = true;
-            } else if (closeBtnReplaced) {
+            } else {
                 btn.style.display = 'none';
+            }
+        }
+
+        // Broad sweep: hide any remaining header buttons/controls that are not our custom close button
+        const allHeaderControls = windowElement.querySelectorAll(
+            '.window-header button, .window-header a.header-button, .window-header .header-control'
+        );
+        for (const el of allHeaderControls) {
+            if (!el.classList.contains('cyphur-close-btn')) {
+                el.style.display = 'none';
             }
         }
 

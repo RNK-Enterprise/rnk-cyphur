@@ -176,10 +176,10 @@
     border-radius: 50%;
 }
 
-/* Hide any native Foundry close button that wasn't replaced with the custom icon */
-.cyphur-window .window-header .header-button.close:not(:has(.close-icon)),
-.cyphur-window .window-header .header-control.close:not(:has(.close-icon)),
-.cyphur-window .window-header button[data-action="close"]:not(:has(.close-icon)) {
+/* Hide all native Foundry header controls — only show our explicitly marked custom close button */
+.cyphur-window .window-header button:not(.cyphur-close-btn),
+.cyphur-window .window-header a.header-button:not(.cyphur-close-btn),
+.cyphur-window .window-header .header-control:not(.cyphur-close-btn) {
     display: none !important;
 }
 
