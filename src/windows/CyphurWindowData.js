@@ -1,0 +1,96 @@
+/**
+ * RNK Cyphur - Chat Window Data
+ * Engine for Chat Window context preparation and message enrichment.
+ */
+
+import { REACTION_EMOJIS } from '../Constants.js';
+import { DataManager } from '../DataManager.js';
+import { Utils } from '../Utils.js';
+
+export class CyphurWindowData {
+    static async getChatContext(app) {
+        const { groupId, otherUserId } = app.options;
+        const convId = groupId || DataManager.getPrivateChatKey(game.user.id, otherUserId);
+        
+        const context = {
+            currentUser: game.user,
+            isGM: game.user.isGM,
+            reactionEmojis: REACTION_EMOJIS,
+            isGroup: !!groupId,
+            conversationId: convId,
+            isFavorite: DataManager.isFavorite(convId),
+            isMuted: DataManager.isMuted(convId)
+        };
+
+        if (context.isGM) {
+            context.speakers = [
+                { id: game.user.id, name: game.user.name, isActor: false },
+                ...game.actors.filter(a => a.isOwner).map(a => ({ id: a.id, name: a.name, isActor: true }))
+            ];
+        }
+
+        let rawMessages = [];
+        if (otherUserId) {
+            rawMessages = DataManager.privateChats.get(convId)?.history || [];
+            DataManager.markAsRead(convId);
+            context.otherUser = game.users.get(otherUserId);
+            context.isOnline = game.users.get(otherUserId)?.active;
+        } else {
+            const group = DataManager.groupChats.get(groupId);
+            rawMessages = group?.history || [];
+            DataManager.markAsRead(groupId);
+            context.group = group;
+            context.memberCount = group?.members?.length || 0;
+        }
+
+        context.messages = this._enrichMessages(rawMessages, convId, app._searchQuery);
+        context.typingText = this._getTypingText(convId);
+        
+        const replyToId = DataManager.getReplyTo();
+        if (replyToId) {
+            const replyMsg = rawMessages.find(m => m.id === replyToId);
+            if (replyMsg) context.replyingTo = Utils.formatReplyQuote(replyMsg);
+        }
+
+        return context;
+    }
+
+    static _enrichMessages(messages, convId, query) {
+        let filtered = [...messages];
+        if (query) {
+            const q = query.toLowerCase();
+            filtered = filtered.filter(m => (m.messageContent || '').toLowerCase().includes(q) || (m.senderName || '').toLowerCase().includes(q));
+        }
+
+        return filtered.map(msg => ({
+            ...msg,
+            relativeTime: Utils.formatRelativeTime(msg.timestamp),
+            isOwn: msg.senderId === game.user.id,
+            displayContent: Utils.parseRichContent(msg.messageContent || ''),
+            isPinned: DataManager.isPinned(convId, msg.id),
+            reactions: this._formatReactions(msg.reactions),
+            formattedReactions: this._formatReactions(msg.reactions || {}), // Ensure default object
+            avatar: Utils.getUserAvatar(msg.senderId),
+            senderImg: msg.senderImg || Utils.getUserAvatar(msg.senderId), // Fallback for image field
+            userColor: Utils.getUserColor(msg.senderId)
+        }));
+    }
+
+    static _formatReactions(reactions) {
+        if (!reactions) return [];
+        return Object.entries(reactions).map(([emoji, users]) => ({
+            emoji,
+            count: users.length,
+            users: users.map(id => game.users.get(id)?.name).filter(Boolean).join(', '),
+            isOwnReaction: users.includes(game.user.id)
+        }));
+    }
+
+    static _getTypingText(convId) {
+        const names = DataManager.getTypingUsers(convId);
+        if (!names.length) return '';
+        return names.length === 1 
+            ? game.i18n.format('CYPHUR.TypingSingle', { name: names[0] })
+            : game.i18n.format('CYPHUR.TypingMultiple', { names: names.join(', ') });
+    }
+}
