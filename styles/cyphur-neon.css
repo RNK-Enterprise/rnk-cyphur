@@ -110,7 +110,8 @@
 }
 
 /* Window Header */
-.cyphur-window .window-header {
+.cyphur-window .window-header,
+.rnk-cyphur .window-header {
     background: #f0f0f0;
     border-bottom: 1px solid var(--cyphur-border);
     padding: var(--cyphur-spacing-sm) var(--cyphur-spacing-md);
@@ -189,7 +190,8 @@
 }
 
 /* Window Content */
-.cyphur-window .window-content {
+.cyphur-window .window-content,
+.rnk-cyphur .window-content {
     padding: var(--cyphur-spacing-md);
     height: calc(100% - 50px);
     overflow: hidden;
@@ -732,9 +734,11 @@
 
 .cyphur-msg-image img,
 .cyphur-shared-image {
-    width: 100%;
+    max-width: 100%;
     height: auto;
+    width: auto;
     display: block;
+    object-fit: contain;
     cursor: pointer;
     transition: var(--cyphur-transition);
 }
@@ -1190,6 +1194,9 @@
 .cyphur-image-preview img {
     max-width: 200px;
     max-height: 200px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
     border-radius: var(--cyphur-radius-sm);
 }
 
@@ -1493,6 +1500,8 @@
     color: var(--cyphur-neon-yellow, #ffcc00);
     font-size: 10px;
     margin-right: 3px;
+    cursor: pointer;
+    pointer-events: auto;
 }
 
 .cyphur-gm-badge {

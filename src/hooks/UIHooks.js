@@ -21,8 +21,11 @@ export class UIHooks {
             }
         });
 
-        // FilePicker Fix
+        // FilePicker Fix (only for Cyphur windows)
         Hooks.on('renderFilePicker', (app, html) => {
+            const hasCyphur = Boolean(app?.element?.closest?.('.rnk-cyphur') || app?.element?.closest?.('.cyphur-window'));
+            if (!hasCyphur) return;
+
             const all = Array.from(document.querySelectorAll('body *'));
             let maxZ = 0;
             all.forEach(el => {
@@ -32,10 +35,12 @@ export class UIHooks {
 
             const dlg = html.closest('.dialog');
             const target = dlg && dlg.length ? dlg[0] : html[0];
+            if (!target) return;
+
             try { document.body.appendChild(target); } catch (e) {}
             const rect = target.getBoundingClientRect();
             const finalZ = Math.max(maxZ + 10, 9999999);
-            $(target).css({ position: 'fixed', top: `${rect.top}px`, left: `${rect.left}px`, zIndex: finalZ });
+            try { $(target).css({ position: 'fixed', top: `${rect.top}px`, left: `${rect.left}px`, zIndex: finalZ }); } catch (e) { }
         });
 
         // Scene Controls

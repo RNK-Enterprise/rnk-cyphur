@@ -7,6 +7,7 @@ import { MODULE_ID } from '../Constants.js';
 import { UIManager } from '../UIManager.js';
 import { DataManager } from '../DataManager.js';
 import { PlayerHubUtils } from './PlayerHubUtils.js';
+import { Utils } from '../Utils.js';
 
 export class PlayerHubEvents {
     static activateListeners(app, element) {
@@ -53,8 +54,19 @@ export class PlayerHubEvents {
         element.querySelectorAll('.cyphur-conv-item').forEach(item => {
             item.addEventListener('click', (e) => {
                 if (e.target.closest('.cyphur-conv-action')) return;
+
                 const convId = item.dataset.conversationId;
                 const type = item.dataset.type;
+
+                if (e.target.closest('.cyphur-fav-icon')) {
+                    const id = convId || DataManager.getPrivateChatKey(game.user.id, item.dataset.userId);
+                    DataManager.toggleFavorite(id);
+                    UIManager.updatePlayerHub();
+                    Utils.playUISound('buttonPress');
+                    return;
+                }
+
+                Utils.playUISound('buttonPress');
                 if (type === 'group') UIManager.openGroupChat(convId);
                 else UIManager.openChatFor(item.dataset.userId);
             });
@@ -90,7 +102,11 @@ export class PlayerHubEvents {
 
         // Volume & Settings
         element.querySelector('[data-action="setVolume"]')?.addEventListener('input', (e) => {
-            game.settings.set(MODULE_ID, 'notificationVolume', parseFloat(e.target.value) / 100);
+            const value = parseFloat(e.target.value) || 0;
+            game.settings.set(MODULE_ID, 'notificationVolume', value / 100);
+
+            const volumeDisplay = element.querySelector('.cyphur-volume-value');
+            if (volumeDisplay) volumeDisplay.textContent = `${value}%`;
         });
 
         element.querySelectorAll('input[type="checkbox"][data-action]').forEach(cb => {

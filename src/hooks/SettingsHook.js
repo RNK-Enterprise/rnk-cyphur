@@ -63,6 +63,22 @@ export class SettingsHook {
                 name: 'Enable Browser Notifications', scope: 'client', config: true, type: Boolean, default: DEFAULTS.enableDesktopNotifications
             });
 
+            game.settings.register(MODULE_ID, 'sfxCloseWindow', {
+                name: 'Close Window Sound', scope: 'client', config: true, type: String, default: DEFAULTS.sfxCloseWindow
+            });
+
+            game.settings.register(MODULE_ID, 'sfxGetMessage', {
+                name: 'Incoming Message Sound', scope: 'client', config: true, type: String, default: DEFAULTS.sfxGetMessage
+            });
+
+            game.settings.register(MODULE_ID, 'sfxButtonPress', {
+                name: 'Button Press Sound', scope: 'client', config: true, type: String, default: DEFAULTS.sfxButtonPress
+            });
+
+            game.settings.register(MODULE_ID, 'sfxSendMessage', {
+                name: 'Send Message Sound', scope: 'client', config: true, type: String, default: DEFAULTS.sfxSendMessage
+            });
+
             game.settings.register(MODULE_ID, 'enterToSend', {
                 name: 'Enter to Send', scope: 'client', config: true, type: Boolean, default: DEFAULTS.enterToSend
             });

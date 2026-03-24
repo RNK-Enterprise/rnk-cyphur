@@ -303,11 +303,42 @@ export class Utils {
      * Play a UI sound effect
      * @param {string} soundFile - Sound filename from UI_SOUNDS
      */
-    static playUISound(soundFile) {
+    static _resolveSoundPath(soundKey) {
+        const gmOverrideEnabled = game.settings.get('rnk-cyphur', 'gmOverrideEnabled');
+        const gmOverridePath = game.settings.get('rnk-cyphur', 'gmOverrideSoundPath');
+
+        if (gmOverrideEnabled && gmOverridePath) {
+            return gmOverridePath;
+        }
+
+        const settingsKey = {
+            closeWindow: 'sfxCloseWindow',
+            getMessage: 'sfxGetMessage',
+            buttonPress: 'sfxButtonPress',
+            sendMessage: 'sfxSendMessage'
+        }[soundKey];
+
+        if (settingsKey) {
+            const customPath = game.settings.get('rnk-cyphur', settingsKey);
+            if (customPath) return customPath;
+        }
+
+        const defaultSoundPaths = {
+            closeWindow: 'modules/rnk-cyphur/sounds/Closes a window.wav',
+            getMessage: 'modules/rnk-cyphur/sounds/gets a message.wav',
+            buttonPress: 'modules/rnk-cyphur/sounds/presses a button.wav',
+            sendMessage: 'modules/rnk-cyphur/sounds/sending or recieving a message.wav'
+        };
+
+        return defaultSoundPaths[soundKey] || null;
+    }
+
+    static playUISound(soundKey) {
         try {
             if (!game.settings.get('rnk-cyphur', 'enableSounds')) return;
             const volume = game.settings.get('rnk-cyphur', 'notificationVolume');
-            const soundPath = `modules/rnk-cyphur/sounds/${soundFile}`;
+            const soundPath = this._resolveSoundPath(soundKey);
+            if (!soundPath) return;
             Utils.playSound(soundPath, volume);
         } catch (e) {
             console.warn('Cyphur | Failed to play UI sound:', e);

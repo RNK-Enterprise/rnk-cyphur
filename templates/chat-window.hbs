@@ -99,33 +99,8 @@
                 </div>
                 {{/if}}
 
-                <!-- Message Actions -->
-                <div class="cyphur-msg-actions">
-                    <button type="button" class="cyphur-msg-btn cyphur-msg-reply" title="{{localize 'CYPHUR.Reply'}}">
-                        <i class="fas fa-reply"></i>
-                    </button>
-                    <button type="button" class="cyphur-msg-btn cyphur-msg-react" title="{{localize 'CYPHUR.React'}}">
-                        <i class="far fa-smile"></i>
-                    </button>
-                    <button type="button" class="cyphur-msg-btn cyphur-msg-pin" title="{{#if this.isPinned}}{{localize 'CYPHUR.Unpin'}}{{else}}{{localize 'CYPHUR.Pin'}}{{/if}}">
-                        <i class="fas fa-thumbtack"></i>
-                    </button>
-                    {{#if this.isOwn}}
-                    <button type="button" class="cyphur-msg-btn cyphur-msg-edit" title="{{localize 'CYPHUR.Edit'}}">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button type="button" class="cyphur-msg-btn cyphur-msg-delete" title="{{localize 'CYPHUR.Delete'}}">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                    {{/if}}
-
-                    <!-- Emoji Picker (hidden by default) -->
-                    <div class="cyphur-emoji-picker">
-                        {{#each ../reactionEmojis}}
-                        <button type="button" class="cyphur-emoji-option" data-emoji="{{this}}">{{this}}</button>
-                        {{/each}}
-                    </div>
-                </div>
+                <!-- Message Actions removed for simplified interface -->
+                <div class="cyphur-msg-actions" style="display:none;"></div>
             </div>
         </div>
         {{/each}}

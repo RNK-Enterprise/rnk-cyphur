@@ -91,26 +91,8 @@ export class CyphurWindowEvents {
             }).browse(current);
         });
         
-        element.querySelectorAll('.cyphur-msg-reply').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const id = e.currentTarget.closest('[data-message-id]')?.dataset.messageId;
-                DataManager.setReplyTo(id);
-                app.render({force: true});
-            });
-        });
-
-        element.querySelectorAll('.cyphur-msg-react').forEach(btn => {
-            btn.addEventListener('click', (e) => e.currentTarget.closest('[data-message-id]')?.querySelector('.cyphur-emoji-picker')?.classList.toggle('visible'));
-        });
-
-        element.querySelectorAll('.cyphur-emoji-option').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const emoji = e.currentTarget.dataset.emoji;
-                const msgId = e.currentTarget.closest('[data-message-id]')?.dataset.messageId;
-                const convId = app.options.groupId || DataManager.getPrivateChatKey(game.user.id, app.options.otherUserId);
-                CyphurWindowActions.toggleReaction(convId, msgId, emoji, !!app.options.groupId);
-            });
-        });
+        // Message action buttons are removed from UI (reply/react/pin/edit/delete not available)
+        // Event listeners for those actions are intentionally no-op.
     }
 
     static _onTyping(app) {

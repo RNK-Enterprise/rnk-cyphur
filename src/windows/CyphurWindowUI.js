@@ -138,5 +138,16 @@ export class CyphurWindowUI {
                 img.src = img.dataset.default;
             }
         }
+
+        // Play button press sound for generic grey buttons (cyphur-btn)
+        const greyButtons = windowElement.querySelectorAll('.cyphur-btn, .cyphur-btn-icon');
+        for (const btn of greyButtons) {
+            if (btn._cyphurGreySoundAttached) continue;
+            btn._cyphurGreySoundAttached = true;
+            btn.addEventListener('click', () => {
+                if (btn.classList.contains('cyphur-send-btn') || btn.classList.contains('cyphur-close-btn')) return;
+                Utils.playUISound('buttonPress');
+            });
+        }
     }
 }

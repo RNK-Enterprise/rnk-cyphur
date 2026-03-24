@@ -43,7 +43,7 @@ export const MESSAGE_TYPES = {
 // Default settings values
 export const DEFAULTS = {
     enableSounds: true,
-    soundVolume: 0.5,
+    notificationVolume: 0.5,
     enableDesktopNotifications: true,
     enterToSend: true,
     shareBackground: false,
@@ -51,15 +51,20 @@ export const DEFAULTS = {
     compactMode: false,
     maxMessageHistory: 500,
     typingTimeout: 5000,
-    maxIntercepted: 1000
+    maxIntercepted: 1000,
+
+    sfxCloseWindow: 'modules/rnk-cyphur/sounds/Closes a window.wav',
+    sfxGetMessage: 'modules/rnk-cyphur/sounds/gets a message.wav',
+    sfxButtonPress: 'modules/rnk-cyphur/sounds/presses a button.wav',
+    sfxSendMessage: 'modules/rnk-cyphur/sounds/sending or recieving a message.wav'
 };
 
-// UI Sound effects (fixed, not user-selectable)
+// UI Sound effect keys (for customization by settings)
 export const UI_SOUNDS = {
-    closeWindow:  'Closes a window.wav',
-    getMessage:   'gets a message.wav',
-    buttonPress:  'presses a button.wav',
-    sendMessage:  'sending or recieving a message.wav'
+    closeWindow: 'closeWindow',
+    getMessage: 'getMessage',
+    buttonPress: 'buttonPress',
+    sendMessage: 'sendMessage'
 };
 
 // Reaction emoji presets
