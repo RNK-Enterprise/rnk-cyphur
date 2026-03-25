@@ -113,10 +113,6 @@ export class CyphurWindowUI {
 
             btn.addEventListener('mousedown', () => {
                 img.src = img.dataset.active;
-                // Play button press sound (skip for send/close which have their own sounds)
-                if (!btn.classList.contains('cyphur-send-btn') && !btn.classList.contains('close') && !btn.dataset.action?.includes('close')) {
-                    Utils.playUISound(UI_SOUNDS.buttonPress);
-                }
             });
             btn.addEventListener('mouseup', () => {
                 img.src = img.dataset.default;
@@ -138,14 +134,14 @@ export class CyphurWindowUI {
             }
         }
 
-        // Grey buttons (cyphur-btn) - Play presses a button.wav SFX
+        // Grey buttons (cyphur-btn) - Play buttonPress SFX
         const greyButtons = windowElement.querySelectorAll('.cyphur-btn, .cyphur-btn-icon');
         for (const btn of greyButtons) {
             if (btn._cyphurGreySoundAttached) continue;
             btn._cyphurGreySoundAttached = true;
             btn.addEventListener('click', () => {
                 if (btn.classList.contains('cyphur-send-btn') || btn.classList.contains('cyphur-close-btn')) return;
-                Utils.playSound('modules/rnk-cyphur/sounds/presses a button.wav');
+                Utils.playUISound(UI_SOUNDS.buttonPress);
             });
         }
     }
