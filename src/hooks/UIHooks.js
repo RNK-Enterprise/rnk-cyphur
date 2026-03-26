@@ -11,12 +11,14 @@ export class UIHooks {
         // Apply button images to all cyphur windows on render
         Hooks.on('renderApplication', (app, html) => {
             const el = html[0] || html;
-            if (el?.classList?.contains('cyphur-window') || el?.querySelector?.('.cyphur-window')) {
+            if (el?.classList?.contains('cyphur-window') || el?.querySelector?.('.cyphur-window') ||
+                el?.classList?.contains('rnk-cyphur') || el?.querySelector?.('.rnk-cyphur')) {
                 CyphurWindowUI.setupButtonImages(el);
             }
         });
         Hooks.on('renderApplicationV2', (app, element) => {
-            if (element?.classList?.contains('cyphur-window') || element?.querySelector?.('.cyphur-window')) {
+            if (element?.classList?.contains('cyphur-window') || element?.querySelector?.('.cyphur-window') ||
+                element?.classList?.contains('rnk-cyphur') || element?.querySelector?.('.rnk-cyphur')) {
                 CyphurWindowUI.setupButtonImages(element);
             }
         });

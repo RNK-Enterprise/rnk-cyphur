@@ -134,8 +134,10 @@ export class CyphurWindowUI {
             }
         }
 
-        // Grey buttons (cyphur-btn) - Play buttonPress SFX
-        const greyButtons = windowElement.querySelectorAll('.cyphur-btn, .cyphur-btn-icon');
+        // Grey buttons - Play buttonPress SFX
+        const greyButtons = windowElement.querySelectorAll(
+            '.cyphur-btn, .cyphur-btn-icon, .cyphur-btn-small, .cyphur-toolbar-btn, .cyphur-filter-btn, .cyphur-toggle-btn, .cyphur-btn-gm'
+        );
         for (const btn of greyButtons) {
             if (btn._cyphurGreySoundAttached) continue;
             btn._cyphurGreySoundAttached = true;
