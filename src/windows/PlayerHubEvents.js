@@ -66,7 +66,6 @@ export class PlayerHubEvents {
                     return;
                 }
 
-                Utils.playUISound('buttonPress');
                 if (type === 'group') UIManager.openGroupChat(convId);
                 else UIManager.openChatFor(item.dataset.userId);
             });
