@@ -64,4 +64,80 @@ export class SocketListeners {
             }
         }
     }
+
+    static async handleEditMessage(payload) {
+        const { conversationId, messageId, newContent, isGroup } = payload;
+        if (!conversationId || !messageId) return;
+
+        DataManager.editMessage(conversationId, messageId, newContent, isGroup);
+        if (isGroup) UIManager.updateChatWindow(conversationId, 'group');
+        else {
+            const otherUserId = conversationId.split('-').find(id => id !== game.user.id);
+            if (otherUserId) UIManager.updateChatWindow(otherUserId, 'private');
+        }
+        UIManager.updatePlayerHub();
+    }
+
+    static async handleDeleteMessage(payload) {
+        const { conversationId, messageId, isGroup } = payload;
+        if (!conversationId || !messageId) return;
+
+        DataManager.deleteMessage(conversationId, messageId, isGroup);
+        if (isGroup) UIManager.updateChatWindow(conversationId, 'group');
+        else {
+            const otherUserId = conversationId.split('-').find(id => id !== game.user.id);
+            if (otherUserId) UIManager.updateChatWindow(otherUserId, 'private');
+        }
+        UIManager.updatePlayerHub();
+    }
+
+    static async handleAddReaction(payload) {
+        const { conversationId, messageId, emoji, userId, isGroup } = payload;
+        if (!conversationId || !messageId || !emoji || !userId) return;
+
+        DataManager.addReaction(conversationId, messageId, emoji, userId, isGroup);
+        if (isGroup) UIManager.updateChatWindow(conversationId, 'group');
+        else {
+            const otherUserId = conversationId.split('-').find(id => id !== game.user.id);
+            if (otherUserId) UIManager.updateChatWindow(otherUserId, 'private');
+        }
+    }
+
+    static async handleGroupCreate(payload) {
+        const group = payload?.group;
+        if (!group?.id) return;
+        if (!game.user.isGM && !group.members?.includes(game.user.id)) return;
+
+        DataManager.groupChats.set(group.id, group);
+        UIManager.updatePlayerHub();
+        UIManager.updateGroupManager();
+    }
+
+    static async handleGroupUpdate(payload) {
+        const group = payload?.group;
+        const groupId = payload?.groupId || group?.id;
+        if (!groupId || !group) return;
+
+        const isRelevant = game.user.isGM || group.members?.includes(game.user.id);
+        if (!isRelevant) {
+            DataManager.deleteGroup(groupId);
+            UIManager.closeChatWindow(groupId, 'group');
+        } else {
+            DataManager.groupChats.set(groupId, group);
+            UIManager.updateChatWindow(groupId, 'group');
+        }
+
+        UIManager.updatePlayerHub();
+        UIManager.updateGroupManager();
+    }
+
+    static async handleGroupDelete(payload) {
+        const { groupId } = payload || {};
+        if (!groupId) return;
+
+        DataManager.deleteGroup(groupId);
+        UIManager.closeChatWindow(groupId, 'group');
+        UIManager.updatePlayerHub();
+        UIManager.updateGroupManager();
+    }
 }

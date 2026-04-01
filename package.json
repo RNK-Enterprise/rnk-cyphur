@@ -1,12 +1,13 @@
 {
     "name": "rnk-cyphur",
-    "version": "1.2.8",
+    "version": "1.2.9",
     "description": "Next-generation encrypted communications module for Foundry VTT",
     "main": "main.js",
     "type": "module",
     "scripts": {
-        "lint": "eslint src/**/*.js",
-        "test": "node test/run-tests.js"
+        "lint": "node scripts/validate.mjs",
+        "validate": "node scripts/validate.mjs",
+        "test": "node scripts/validate.mjs"
     },
     "keywords": [
         "foundry-vtt",

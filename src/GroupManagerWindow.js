@@ -104,49 +104,83 @@ export class GroupManagerWindow extends AppClass {
         this.bringToFront();
         this._addHeaderLogo();
 
-        // Group selection
-        element.querySelectorAll('.cyphur-group-item input[type="checkbox"]').forEach(cb => {
-            cb.addEventListener('change', () => this._updateSelectionState());
+        if (this._listenersBound) {
+            this._updateSelectionState();
+            return;
+        }
+
+        element.addEventListener('change', (event) => {
+            if (event.target.matches('.cyphur-group-item input[type="checkbox"]')) {
+                this._updateSelectionState();
+            }
         });
 
-        // Action buttons
-        element.querySelector('[data-action="openSelected"]')?.addEventListener('click', () => this._onOpenSelected());
-        element.querySelector('[data-action="exportSelected"]')?.addEventListener('click', () => this._onExportSelected());
-        element.querySelector('[data-action="deleteSelected"]')?.addEventListener('click', () => this._onDeleteSelected());
-        element.querySelector('[data-action="createGroup"]')?.addEventListener('click', () => this._onCreateGroup());
+        element.addEventListener('click', (event) => {
+            const button = event.target.closest('[data-action]');
+            if (!button) return;
 
-        // Edit buttons
-        element.querySelectorAll('.cyphur-edit-group').forEach(btn => {
-            btn.addEventListener('click', (e) => this._onEditGroup(e));
+            switch (button.dataset.action) {
+                case 'openSelected':
+                    this._onOpenSelected();
+                    break;
+                case 'exportSelected':
+                    this._onExportSelected();
+                    break;
+                case 'deleteSelected':
+                    this._onDeleteSelected();
+                    break;
+                case 'createGroup':
+                    this._onCreateGroup();
+                    break;
+                case 'editGroup':
+                    this._onEditGroup(event);
+                    break;
+                case 'openGroup':
+                    this._onOpenGroup(event);
+                    break;
+                default:
+                    break;
+            }
         });
+
+        this._listenersBound = true;
+        this._updateSelectionState();
     }
 
     _updateSelectionState() {
-        const selected = this.element.querySelectorAll('.cyphur-group-item input[type="checkbox"]:checked');
-        const actionBtns = this.element.querySelectorAll('.cyphur-selection-actions button');
+        const root = this.element;
+        if (!root) return;
+
+        const selected = root.querySelectorAll('.cyphur-group-item input[type="checkbox"]:checked');
+        const actionBtns = root.querySelectorAll('.cyphur-selection-actions button');
         actionBtns.forEach(btn => btn.disabled = selected.length === 0);
     }
 
+    _getSelectedGroupIds() {
+        const root = this.element;
+        if (!root) return [];
+
+        return Array.from(root.querySelectorAll('.cyphur-group-item input[type="checkbox"]:checked'))
+            .map(cb => cb.closest('.cyphur-group-item')?.dataset.groupId)
+            .filter(Boolean);
+    }
+
     async _onOpenSelected() {
-        const selected = this.element.querySelectorAll('.cyphur-group-item input[type="checkbox"]:checked');
-        if (selected.length === 0) {
+        const selectedGroupIds = this._getSelectedGroupIds();
+        if (selectedGroupIds.length === 0) {
             return ui.notifications.warn(game.i18n.localize('CYPHUR.SelectGroupOpen'));
         }
 
-        selected.forEach(cb => {
-            const groupId = cb.closest('.cyphur-group-item').dataset.groupId;
-            UIManager.openGroupChat(groupId);
-        });
+        selectedGroupIds.forEach(groupId => UIManager.openGroupChat(groupId));
     }
 
     async _onExportSelected() {
-        const selected = this.element.querySelectorAll('.cyphur-group-item input[type="checkbox"]:checked');
-        if (selected.length === 0) {
+        const selectedGroupIds = this._getSelectedGroupIds();
+        if (selectedGroupIds.length === 0) {
             return ui.notifications.warn(game.i18n.localize('CYPHUR.SelectGroupExport'));
         }
 
-        selected.forEach(cb => {
-            const groupId = cb.closest('.cyphur-group-item').dataset.groupId;
+        selectedGroupIds.forEach(groupId => {
             const group = DataManager.groupChats.get(groupId);
             if (group) {
                 const filename = `cyphur-${group.name.replace(/[^a-z0-9]/gi, '-')}-${Date.now()}.txt`;
@@ -158,19 +192,18 @@ export class GroupManagerWindow extends AppClass {
     }
 
     async _onDeleteSelected() {
-        const selected = this.element.querySelectorAll('.cyphur-group-item input[type="checkbox"]:checked');
-        if (selected.length === 0) {
+        const selectedGroupIds = this._getSelectedGroupIds();
+        if (selectedGroupIds.length === 0) {
             return ui.notifications.warn(game.i18n.localize('CYPHUR.SelectGroupDelete'));
         }
 
         const confirmed = await Dialog.confirm({
             title: game.i18n.localize('CYPHUR.DeleteConfirmTitle'),
-            content: game.i18n.format('CYPHUR.DeleteConfirmContent', { count: selected.length })
+            content: game.i18n.format('CYPHUR.DeleteConfirmContent', { count: selectedGroupIds.length })
         });
 
         if (confirmed) {
-            for (const cb of selected) {
-                const groupId = cb.closest('.cyphur-group-item').dataset.groupId;
+            for (const groupId of selectedGroupIds) {
                 await RNKCyphur.deleteGroup(groupId);
             }
             this.render(true);
@@ -178,7 +211,10 @@ export class GroupManagerWindow extends AppClass {
     }
 
     async _onCreateGroup() {
-        const nameInput = this.element.querySelector('input[name="newGroupName"]');
+        const root = this.element;
+        if (!root) return;
+
+        const nameInput = root.querySelector('input[name="newGroupName"]');
         const name = nameInput?.value?.trim();
 
         if (!name) {
@@ -186,7 +222,7 @@ export class GroupManagerWindow extends AppClass {
         }
 
         const selectedMembers = Array.from(
-            this.element.querySelectorAll('.cyphur-member-select input[type="checkbox"]:checked')
+            root.querySelectorAll('.cyphur-member-select input[type="checkbox"]:checked')
         ).map(cb => cb.value);
 
         if (selectedMembers.length === 0) {
@@ -197,9 +233,16 @@ export class GroupManagerWindow extends AppClass {
         
         // Clear form
         if (nameInput) nameInput.value = '';
-        this.element.querySelectorAll('.cyphur-member-select input[type="checkbox"]').forEach(cb => cb.checked = false);
+        root.querySelectorAll('.cyphur-member-select input[type="checkbox"]').forEach(cb => cb.checked = false);
         
         this.render(true);
+    }
+
+    async _onOpenGroup(event) {
+        const groupId = event.currentTarget?.closest?.('.cyphur-group-item')?.dataset?.groupId
+            || event.target.closest('.cyphur-group-item')?.dataset.groupId;
+        if (!groupId) return;
+        UIManager.openGroupChat(groupId);
     }
 
     async _onEditGroup(event) {
@@ -246,10 +289,7 @@ export class GroupManagerWindow extends AppClass {
             }
 
             // Broadcast update
-            SocketHandler.broadcastGroupUpdate(groupId, {
-                name: result.name.trim(),
-                members: result.members
-            });
+            SocketHandler.broadcastGroupUpdate(groupId, DataManager.groupChats.get(groupId));
 
             ui.notifications.info(game.i18n.localize('CYPHUR.GroupUpdated'));
             this.render(true);

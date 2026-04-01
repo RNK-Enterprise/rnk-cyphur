@@ -510,7 +510,21 @@
         "SettingPersonalBackground": "Personal Background",
         "SettingPersonalBackgroundHint": "Set a custom background image for your chat windows",
         "SettingShareBackground": "Share Background",
-        "SettingShareBackgroundHint": "Allow others to see your custom background"
+        "SettingShareBackgroundHint": "Allow others to see your custom background",
+        "GroupManagerTitle": "Group Manager",
+        "SelectGroupOpen": "Select at least one group to open.",
+        "SelectGroupExport": "Select at least one group to export.",
+        "SelectGroupDelete": "Select at least one group to delete.",
+        "DeleteConfirmTitle": "Delete Groups",
+        "DeleteConfirmContent": "Delete {count} selected group(s)? This will remove their chat history.",
+        "GroupNameEmpty": "Enter a group name.",
+        "SelectAtLeastOneMember": "Select at least one member.",
+        "DeletePermissionError": "Only a GM can delete groups.",
+        "DeleteSuccess": "Group deleted: {name}",
+        "NotMember": "You are not a member of that group.",
+        "GMOnlyTool": "Only a GM can use this tool.",
+        "NoPermission": "You do not have permission to do that.",
+        "OnlyGMsAccessModeration": "Only a GM can open moderation tools."
     }
 }
 

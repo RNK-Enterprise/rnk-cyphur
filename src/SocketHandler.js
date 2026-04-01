@@ -20,17 +20,26 @@ export class SocketHandler {
             case SOCKET_EVENTS.GROUP_MESSAGE:
                 await SocketListeners.handleGroupMessage(data.payload);
                 break;
+            case SOCKET_EVENTS.GROUP_CREATE:
+                await SocketListeners.handleGroupCreate(data.payload);
+                break;
+            case SOCKET_EVENTS.GROUP_UPDATE:
+                await SocketListeners.handleGroupUpdate(data.payload);
+                break;
+            case SOCKET_EVENTS.GROUP_DELETE:
+                await SocketListeners.handleGroupDelete(data.payload);
+                break;
             case SOCKET_EVENTS.TYPING:
                 SocketListeners.handleTyping(data.payload);
                 break;
             case SOCKET_EVENTS.EDIT_MESSAGE:
-                await SocketListeners.handleEditMessage?.(data.payload);
+                await SocketListeners.handleEditMessage(data.payload);
                 break;
             case SOCKET_EVENTS.DELETE_MESSAGE:
-                await SocketListeners.handleDeleteMessage?.(data.payload);
+                await SocketListeners.handleDeleteMessage(data.payload);
                 break;
             case SOCKET_EVENTS.ADD_REACTION:
-                await SocketListeners.handleAddReaction?.(data.payload);
+                await SocketListeners.handleAddReaction(data.payload);
                 break;
             default:
                 break;
@@ -42,4 +51,10 @@ export class SocketHandler {
     static sendPrivateMessage(id, msg) { SocketEmitters.sendPrivateMessage(id, msg); }
     static sendGroupMessage(id, msg) { SocketEmitters.sendGroupMessage(id, msg); }
     static sendTypingIndicator(id, typ, grp) { SocketEmitters.sendTypingIndicator(id, typ, grp); }
+    static broadcastGroupCreate(group) { SocketEmitters.broadcastGroupCreate(group); }
+    static broadcastGroupUpdate(groupId, group) { SocketEmitters.broadcastGroupUpdate(groupId, group); }
+    static broadcastGroupDelete(groupId, members) { SocketEmitters.broadcastGroupDelete(groupId, members); }
+    static broadcastEditMessage(conversationId, messageId, newContent, isGroup) { SocketEmitters.broadcastEditMessage(conversationId, messageId, newContent, isGroup); }
+    static broadcastDeleteMessage(conversationId, messageId, isGroup) { SocketEmitters.broadcastDeleteMessage(conversationId, messageId, isGroup); }
+    static broadcastReaction(conversationId, messageId, emoji, isGroup) { SocketEmitters.broadcastReaction(conversationId, messageId, emoji, isGroup); }
 }

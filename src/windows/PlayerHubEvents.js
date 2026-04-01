@@ -16,6 +16,7 @@ export class PlayerHubEvents {
             tab.addEventListener('click', (e) => {
                 app.activeTab = e.currentTarget.dataset.tab;
                 this._updateTabs(element, app.activeTab);
+                Utils.playUISound('buttonPress');
             });
         });
 

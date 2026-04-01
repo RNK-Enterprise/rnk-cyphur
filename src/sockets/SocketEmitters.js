@@ -52,4 +52,40 @@ export class SocketEmitters {
         if (!recipients.length) return;
         this.emit(SOCKET_EVENTS.TYPING, { conversationId, userId: game.user.id, isTyping, isGroup }, { recipients });
     }
+
+    static broadcastGroupCreate(group) {
+        if (!group) return;
+        this.emit(SOCKET_EVENTS.GROUP_CREATE, { group });
+    }
+
+    static broadcastGroupUpdate(groupId, group) {
+        if (!groupId || !group) return;
+        this.emit(SOCKET_EVENTS.GROUP_UPDATE, { groupId, group });
+    }
+
+    static broadcastGroupDelete(groupId, members = []) {
+        if (!groupId) return;
+        this.emit(SOCKET_EVENTS.GROUP_DELETE, { groupId, members });
+    }
+
+    static broadcastEditMessage(conversationId, messageId, newContent, isGroup = false) {
+        if (!conversationId || !messageId) return;
+        this.emit(SOCKET_EVENTS.EDIT_MESSAGE, { conversationId, messageId, newContent, isGroup });
+    }
+
+    static broadcastDeleteMessage(conversationId, messageId, isGroup = false) {
+        if (!conversationId || !messageId) return;
+        this.emit(SOCKET_EVENTS.DELETE_MESSAGE, { conversationId, messageId, isGroup });
+    }
+
+    static broadcastReaction(conversationId, messageId, emoji, isGroup = false) {
+        if (!conversationId || !messageId || !emoji) return;
+        this.emit(SOCKET_EVENTS.ADD_REACTION, {
+            conversationId,
+            messageId,
+            emoji,
+            isGroup,
+            userId: game.user.id
+        });
+    }
 }
