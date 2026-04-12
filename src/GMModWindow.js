@@ -55,29 +55,16 @@ export class GMModWindow extends AppClass {
     }
 
     async _prepareContext() {
-        // Get all conversations
-        const privateChats = Array.from(DataManager.privateChats.entries()).map(([key, chat]) => {
-            const users = chat.users.map(id => game.users.get(id)?.name || 'Unknown').join(' ↔ ');
-            return {
-                id: key,
-                name: users,
-                type: 'private',
-                messageCount: chat.history?.length || 0
-            };
-        });
-
-        const groupChats = Array.from(DataManager.groupChats.values()).map(group => ({
-            id: group.id,
-            name: group.name,
-            type: 'group',
-            messageCount: group.history?.length || 0,
-            memberCount: group.members?.length || 0
-        }));
+        const privateChats = this._getConversationEntries('private');
+        const actorChats = this._getConversationEntries('actor');
+        const groupChats = this._getConversationEntries('group');
 
         return {
             privateChats,
+            actorChats,
             groupChats,
             totalPrivate: privateChats.length,
+            totalActors: actorChats.length,
             totalGroups: groupChats.length
         };
     }
@@ -116,6 +103,7 @@ export class GMModWindow extends AppClass {
 
         // Clear all buttons
         element.querySelector('[data-action="clearAllPrivate"]')?.addEventListener('click', () => this._onClearAllPrivate());
+        element.querySelector('[data-action="clearAllActors"]')?.addEventListener('click', () => this._onClearAllActors());
         element.querySelector('[data-action="clearAllGroups"]')?.addEventListener('click', () => this._onClearAllGroups());
 
         // Open monitor button
@@ -142,13 +130,7 @@ export class GMModWindow extends AppClass {
         });
 
         if (confirmed) {
-            DataManager.clearConversation(convId, type === 'group');
-            
-            if (type === 'group') {
-                await DataManager.saveGroupChats();
-            } else {
-                await DataManager.savePrivateChats();
-            }
+            this._clearConversation(type, convId);
             
             ui.notifications.info(game.i18n.localize('CYPHUR.ConversationCleared'));
             this.render(true);
@@ -168,12 +150,7 @@ export class GMModWindow extends AppClass {
         });
 
         if (confirmed) {
-            if (type === 'group') {
-                await RNKCyphur.deleteGroup(convId);
-            } else {
-                DataManager.privateChats.delete(convId);
-                await DataManager.savePrivateChats();
-            }
+            await this._deleteConversation(type, convId);
             
             ui.notifications.info(game.i18n.localize('CYPHUR.ConversationDeleted'));
             this.render(true);
@@ -190,10 +167,14 @@ export class GMModWindow extends AppClass {
         if (type === 'group') {
             UIManager.openGroupChat(convId);
         } else {
-            // Extract other user ID from private chat key
-            const parts = convId.split('-');
-            const otherUserId = parts.find(id => id !== game.user.id);
-            if (otherUserId) UIManager.openChatFor(otherUserId);
+            const chat = DataManager.getConversation(convId);
+            if (DataManager.getConversationType(convId) === 'actor') {
+                UIManager.openChatForActor(chat.actorId || convId.replace(/^actor:/, ''));
+            } else {
+                const parts = convId.split('-');
+                const otherUserId = parts.find(id => id !== game.user.id);
+                if (otherUserId) UIManager.openChatFor(otherUserId);
+            }
         }
     }
 
@@ -204,12 +185,23 @@ export class GMModWindow extends AppClass {
         });
 
         if (confirmed) {
-            for (const chat of DataManager.privateChats.values()) {
-                chat.history = [];
-            }
-            await DataManager.savePrivateChats();
+            await this._clearAllConversations('private');
             
             ui.notifications.info(game.i18n.localize('CYPHUR.AllPrivateCleared'));
+            this.render(true);
+        }
+    }
+
+    async _onClearAllActors() {
+        const confirmed = await Dialog.confirm({
+            title: game.i18n.localize('CYPHUR.Moderation.ClearAllActors'),
+            content: game.i18n.localize('CYPHUR.Moderation.ClearAllActorsConfirm')
+        });
+
+        if (confirmed) {
+            await this._clearAllConversations('actor');
+
+            ui.notifications.info(game.i18n.localize('CYPHUR.Moderation.AllActorsCleared'));
             this.render(true);
         }
     }
@@ -221,13 +213,97 @@ export class GMModWindow extends AppClass {
         });
 
         if (confirmed) {
-            for (const group of DataManager.groupChats.values()) {
-                group.history = [];
-            }
-            await DataManager.saveGroupChats();
+            await this._clearAllConversations('group');
             
             ui.notifications.info(game.i18n.localize('CYPHUR.AllGroupsCleared'));
             this.render(true);
+        }
+    }
+
+    _getConversationEntries(type) {
+        const source = this._getConversationStore(type);
+        if (!source) return [];
+
+        if (type === 'private') {
+            return Array.from(source.entries()).map(([key, chat]) => ({
+                id: key,
+                name: (chat.users || []).map(id => game.users.get(id)?.name || 'Unknown').join(' <-> '),
+                type,
+                messageCount: chat.history?.length || 0
+            }));
+        }
+
+        if (type === 'actor') {
+            return Array.from(source.entries()).map(([key, chat]) => ({
+                id: key,
+                name: `Character: ${chat.actorName || game.actors.get(chat.actorId)?.name || 'Unknown'}`,
+                type,
+                messageCount: chat.history?.length || 0
+            }));
+        }
+
+        return Array.from(source.values()).map(group => ({
+            id: group.id,
+            name: group.name,
+            type,
+            messageCount: group.history?.length || 0,
+            memberCount: group.members?.length || 0
+        }));
+    }
+
+    _getConversationStore(type) {
+        if (type === 'group') return DataManager.groupChats;
+        if (type === 'actor') return DataManager.actorChats;
+        return DataManager.privateChats;
+    }
+
+    async _clearAllConversations(type) {
+        const store = this._getConversationStore(type);
+        if (!store) return;
+
+        for (const chat of store.values()) {
+            chat.history = [];
+        }
+
+        if (type === 'group') {
+            await DataManager.saveGroupChats();
+        } else if (type === 'actor') {
+            await DataManager.saveActorChats();
+        } else {
+            await DataManager.savePrivateChats();
+        }
+    }
+
+    async _clearConversation(type, convId) {
+        if (type === 'group') {
+            DataManager.clearConversation(convId, true);
+            await DataManager.saveGroupChats();
+            return;
+        }
+
+        const store = this._getConversationStore(type);
+        store?.delete(convId);
+
+        if (type === 'actor') {
+            await DataManager.saveActorChats();
+        } else {
+            await DataManager.savePrivateChats();
+        }
+    }
+
+    async _deleteConversation(type, convId) {
+        if (type === 'group') {
+            await RNKCyphur.deleteGroup(convId);
+            return;
+        }
+
+        const store = this._getConversationStore(type);
+        store?.delete(convId);
+
+        if (type === 'actor') {
+            await DataManager.saveActorChats();
+        } else {
+            await DataManager.savePrivateChats();
         }
     }
 

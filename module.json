@@ -2,7 +2,7 @@
   "id": "rnk-cyphur",
   "title": "RNK™ Cyphur",
   "description": "Next-generation encrypted communications module for Foundry VTT. Features private messaging, group channels, image sharing, GM stealth monitoring, and a sleek cyberpunk interface. System agnostic.",
-  "version": "1.2.9",
+  "version": "1.3.0",
   "authors": [
     {
       "name": "Odinn",
@@ -10,12 +10,12 @@
     }
   ],
   "compatibility": {
-    "minimum": 13,
+    "minimum": 11,
     "verified": 13
   },
   "url": "https://github.com/RNK-Enterprise/rnk-cyphur",
   "manifest": "https://github.com/RNK-Enterprise/rnk-cyphur/releases/latest/download/module.json",
-  "download": "https://github.com/RNK-Enterprise/rnk-cyphur/releases/download/v1.2.9/rnk-cyphur-1.2.9.zip",
+  "download": "https://github.com/RNK-Enterprise/rnk-cyphur/releases/download/v1.3.0/rnk-cyphur-1.3.0.zip",
   "esmodules": [
     "main.js"
   ],

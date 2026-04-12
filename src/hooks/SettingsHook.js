@@ -12,6 +12,7 @@ export class SettingsHook {
             const settings = [
                 { key: 'groupChats', scope: 'world', type: Object, default: {} },
                 { key: 'privateChats', scope: 'world', type: Object, default: {} },
+                { key: 'actorChats', scope: 'world', type: Object, default: {} },
                 { key: 'unreadData', scope: 'client', type: Object, default: { counts: {}, lastRead: {} } },
                 { key: 'favorites', scope: 'client', type: Array, default: [] },
                 { key: 'mutedConversations', scope: 'client', type: Array, default: [] },

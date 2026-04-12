@@ -19,7 +19,8 @@
                     <div class="cyphur-conv-item {{#if hasUnread}}has-unread{{/if}}" 
                          data-conversation-id="{{id}}" 
                          data-type="{{type}}"
-                         data-user-id="{{otherUserId}}">
+                         data-user-id="{{otherUserId}}"
+                         data-actor-id="{{otherActorId}}">
                         <div class="cyphur-conv-avatar">
                             {{#if avatar}}
                             <img src="{{avatar}}" alt="{{name}}">
@@ -119,6 +120,35 @@
                         </div>
                         {{else}}
                         <div class="cyphur-empty-column">No Players</div>
+                        {{/each}}
+                    </div>
+                </div>
+
+                {{!-- Characters Column --}}
+                <div class="cyphur-column cyphur-actor-column">
+                    <div class="cyphur-column-header">
+                        <i class="fas fa-mask"></i>
+                        <span>Characters</span>
+                    </div>
+                    <div class="cyphur-user-list">
+                        {{#each actorFriends}}
+                        <div class="cyphur-user-card cyphur-actor-card" data-actor-id="{{id}}" title="Open character chat">
+                            <div class="cyphur-user-avatar">
+                                {{#if avatar}}
+                                <img src="{{avatar}}" alt="{{name}}">
+                                {{else}}
+                                <div class="cyphur-avatar-initials" style="background: {{color}}">{{initials}}</div>
+                                {{/if}}
+                                {{#if isOnline}}<span class="cyphur-online-dot"></span>{{/if}}
+                            </div>
+                            <div class="cyphur-user-name">{{name}}</div>
+                            <div class="cyphur-user-status {{#if isOnline}}online{{else}}offline{{/if}}">
+                                {{#if isOnline}}Online{{else}}Offline{{/if}}
+                            </div>
+                            <i class="fas fa-comments cyphur-selected-check"></i>
+                        </div>
+                        {{else}}
+                        <div class="cyphur-empty-column">No approved characters</div>
                         {{/each}}
                     </div>
                 </div>

@@ -7,6 +7,7 @@ import { DataManager } from './DataManager.js';
 import { SocketHandler } from './SocketHandler.js';
 import { UIManager } from './UIManager.js';
 import { MODULE_ID } from './Constants.js';
+import { ActorContacts } from './data/ActorContacts.js';
 
 export class RNKCyphur {
     static ID = MODULE_ID;
@@ -67,6 +68,49 @@ export class RNKCyphur {
 
         // Update local UI
         UIManager.updateChatWindow(recipientId, 'private');
+        UIManager.updatePlayerHub();
+    }
+
+    /**
+     * Send a message to an actor conversation
+     * @param {string} actorId - Actor ID
+     * @param {string} messageContent - Message content
+     * @param {object} speakerData - Optional speaker override data
+     * @param {string} imageUrl - Optional image URL/data
+     */
+    static async sendActorMessage(actorId, messageContent, speakerData = null, imageUrl = null) {
+        const actor = game.actors.get(actorId);
+        if (!actor) {
+            console.warn(`Cyphur | Cannot send to missing actor: ${actorId}`);
+            return;
+        }
+
+        const senderId = game.user.id;
+        const messageData = {
+            senderId,
+            senderName: speakerData ? speakerData.name : game.user.name,
+            senderImg: speakerData ? speakerData.img : game.user.avatar,
+            messageContent,
+            timestamp: Date.now(),
+            id: foundry.utils.randomID(),
+            targetType: 'actor',
+            targetId: actorId
+        };
+
+        if (imageUrl) {
+            messageData.imageUrl = imageUrl;
+        }
+
+        const replyToId = DataManager.getReplyTo();
+        if (replyToId) {
+            messageData.replyToId = replyToId;
+            DataManager.clearReplyTo();
+        }
+
+        DataManager.addActorMessage(actorId, messageData);
+        SocketHandler.sendActorMessage(actorId, messageData);
+
+        UIManager.updateChatWindow(actorId, 'actor');
         UIManager.updatePlayerHub();
     }
 
@@ -205,9 +249,7 @@ export class RNKCyphur {
         if (isGroup) {
             UIManager.updateChatWindow(conversationId, 'group');
         } else {
-            const parts = conversationId.split('-');
-            const otherUserId = parts.find(id => id !== game.user.id);
-            if (otherUserId) UIManager.updateChatWindow(otherUserId, 'private');
+            UIManager.refreshConversationWindow(conversationId, 'private');
         }
     }
 
@@ -233,9 +275,7 @@ export class RNKCyphur {
         if (isGroup) {
             UIManager.updateChatWindow(conversationId, 'group');
         } else {
-            const parts = conversationId.split('-');
-            const otherUserId = parts.find(id => id !== game.user.id);
-            if (otherUserId) UIManager.updateChatWindow(otherUserId, 'private');
+            UIManager.refreshConversationWindow(conversationId, 'private');
         }
         
         ui.notifications.info(game.i18n.localize('CYPHUR.MessageDeleted'));
@@ -264,9 +304,44 @@ export class RNKCyphur {
         if (isGroup) {
             UIManager.updateChatWindow(conversationId, 'group');
         } else {
-            const parts = conversationId.split('-');
-            const otherUserId = parts.find(id => id !== game.user.id);
-            if (otherUserId) UIManager.updateChatWindow(otherUserId, 'private');
+            UIManager.refreshConversationWindow(conversationId, 'private');
         }
+    }
+
+    /**
+     * Send a friend request to the owners of an actor
+     * @param {string} actorId
+     * @param {object} options
+     */
+    static async requestActorFriendship(actorId, options = {}) {
+        const actor = game.actors.get(actorId);
+        if (!actor) {
+            ui.notifications.warn('Actor not found');
+            return false;
+        }
+
+        const recipients = ActorContacts.getRecipientUserIds(actor);
+        if (!recipients.length) {
+            ui.notifications.warn('No online owner or GM was found for that character.');
+            return false;
+        }
+
+        SocketHandler.sendFriendRequest({
+            requestId: foundry.utils.randomID(),
+            targetActorId: actorId,
+            targetActorName: actor.name,
+            targetActorImg: actor.img,
+            requesterUserId: game.user.id,
+            requesterUserName: game.user.name,
+            requesterActorId: options.requesterActorId || game.user.character?.id || null,
+            requesterActorName: options.requesterActorName || game.user.character?.name || game.user.name,
+            note: options.note || ''
+        }, recipients);
+
+        return true;
+    }
+
+    static async acceptActorFriendRequest(actorId, requesterUserId) {
+        return DataManager.acceptActorFriendRequest(actorId, requesterUserId);
     }
 }

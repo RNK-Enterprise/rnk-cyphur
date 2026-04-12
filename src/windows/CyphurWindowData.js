@@ -6,17 +6,23 @@
 import { REACTION_EMOJIS } from '../Constants.js';
 import { DataManager } from '../DataManager.js';
 import { Utils } from '../Utils.js';
+import { ActorContacts } from '../data/ActorContacts.js';
 
 export class CyphurWindowData {
     static async getChatContext(app) {
-        const { groupId, otherUserId } = app.options;
-        const convId = groupId || DataManager.getPrivateChatKey(game.user.id, otherUserId);
+        const { groupId, otherUserId, actorId } = app.options;
+        const convId = groupId
+            ? groupId
+            : actorId
+                ? DataManager.getActorChatKey(actorId)
+                : DataManager.getPrivateChatKey(game.user.id, otherUserId);
         
         const context = {
             currentUser: game.user,
             isGM: game.user.isGM,
             reactionEmojis: REACTION_EMOJIS,
             isGroup: !!groupId,
+            isActorChat: !!actorId,
             conversationId: convId,
             isFavorite: DataManager.isFavorite(convId),
             isMuted: DataManager.isMuted(convId)
@@ -30,8 +36,14 @@ export class CyphurWindowData {
         }
 
         let rawMessages = [];
-        if (otherUserId) {
-            rawMessages = DataManager.privateChats.get(convId)?.history || [];
+        if (actorId) {
+            rawMessages = DataManager.getConversation(convId)?.history || [];
+            DataManager.markAsRead(convId);
+            const actor = game.actors.get(actorId);
+            context.otherActor = actor;
+            context.isOnline = actor ? ActorContacts.getRecipientUserIds(actor).some(id => game.users.get(id)?.active) : false;
+        } else if (otherUserId) {
+            rawMessages = DataManager.getConversation(convId)?.history || [];
             DataManager.markAsRead(convId);
             context.otherUser = game.users.get(otherUserId);
             context.isOnline = game.users.get(otherUserId)?.active;

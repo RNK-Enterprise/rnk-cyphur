@@ -8,6 +8,7 @@ import { DataManager } from './DataManager.js';
 export class UIManager {
     // Window tracking
     static openPrivateChatWindows = new Map();
+    static openActorChatWindows = new Map();
     static openGroupChatWindows = new Map();
     static gmMonitorWindow = null;
     static settingsWindow = null;
@@ -60,6 +61,39 @@ export class UIManager {
         const { CyphurWindow } = await import('./CyphurWindow.js');
         const window = new CyphurWindow({ otherUserId: userId });
         this.openPrivateChatWindows.set(userId, window);
+        return window.render(true);
+    }
+
+    /**
+     * Open an actor chat window
+     * @param {string} actorId - Actor ID
+     */
+    static async openChatForActor(actorId) {
+        const existingWindow = this.openActorChatWindows.get(actorId);
+        if (existingWindow?.rendered) return existingWindow.render(true);
+
+        const actor = game.actors.get(actorId);
+        if (!actor) return ui.notifications.warn('Actor not found');
+
+        const allowed = DataManager.getVisibleActors().some(a => a.id === actorId);
+        if (!allowed && !game.user.isGM) {
+            return ui.notifications.warn('This character has not accepted your friend request.');
+        }
+
+        const chatKey = DataManager.getActorChatKey(actorId);
+        if (!DataManager.actorChats.has(chatKey)) {
+            DataManager.actorChats.set(chatKey, {
+                kind: 'actor',
+                actorId,
+                actorName: actor.name,
+                actorImg: actor.img,
+                history: []
+            });
+        }
+
+        const { CyphurWindow } = await import('./CyphurWindow.js');
+        const window = new CyphurWindow({ actorId });
+        this.openActorChatWindows.set(actorId, window);
         return window.render(true);
     }
 
@@ -189,6 +223,12 @@ export class UIManager {
                 existingWindow._shouldScrollToBottom = true;
                 existingWindow.render(false);
             }
+        } else if (type === 'actor') {
+            const existingWindow = this.openActorChatWindows.get(id);
+            if (existingWindow?.rendered) {
+                existingWindow._shouldScrollToBottom = true;
+                existingWindow.render(false);
+            }
         } else {
             const existingWindow = this.openGroupChatWindows.get(id);
             if (existingWindow?.rendered) {
@@ -207,6 +247,8 @@ export class UIManager {
     static updateTypingIndicator(id, type) {
         const window = type === 'private'
             ? this.openPrivateChatWindows.get(id)
+            : type === 'actor'
+                ? this.openActorChatWindows.get(id)
             : this.openGroupChatWindows.get(id);
             
         if (window?.rendered && typeof window.updateTypingIndicator === 'function') {
@@ -222,6 +264,8 @@ export class UIManager {
     static openChatWindowForNewMessage(id, type) {
         if (type === 'private') {
             this.openChatFor(id);
+        } else if (type === 'actor') {
+            this.openChatForActor(id);
         } else {
             this.openGroupChat(id);
         }
@@ -235,16 +279,34 @@ export class UIManager {
     static closeChatWindow(id, type) {
         const window = type === 'private'
             ? this.openPrivateChatWindows.get(id)
+            : type === 'actor'
+                ? this.openActorChatWindows.get(id)
             : this.openGroupChatWindows.get(id);
             
         if (window) {
             window.close();
             if (type === 'private') {
                 this.openPrivateChatWindows.delete(id);
+            } else if (type === 'actor') {
+                this.openActorChatWindows.delete(id);
             } else {
                 this.openGroupChatWindows.delete(id);
             }
         }
+    }
+
+    static refreshConversationWindow(conversationId, type = 'private') {
+        if (type === 'group') {
+            return this.updateChatWindow(conversationId, 'group');
+        }
+
+        const chat = DataManager.getConversation(conversationId);
+        if (DataManager.getConversationType(conversationId) === 'actor') {
+            return this.updateChatWindow(chat?.actorId || conversationId.replace(/^actor:/, ''), 'actor');
+        }
+
+        const otherUserId = chat?.users?.find(id => id !== game.user.id) || conversationId.split('-').find(id => id !== game.user.id);
+        if (otherUserId) this.updateChatWindow(otherUserId, 'private');
     }
 
     /**

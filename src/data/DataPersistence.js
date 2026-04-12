@@ -62,8 +62,17 @@ export class DataPersistence {
         try {
             const data = game.settings.get(MODULE_ID, 'privateChats') || {};
             DataStore.privateChats = new Map(Object.entries(data));
+            let migratedActorChats = false;
             for (const [key, chat] of DataStore.privateChats.entries()) {
                 chat.history = this.sanitizeHistory(chat.history ?? []);
+                if (chat.kind === 'actor') {
+                    DataStore.privateChats.delete(key);
+                    DataStore.actorChats.set(key, chat);
+                    migratedActorChats = true;
+                }
+            }
+            if (migratedActorChats) {
+                await this.savePrivateChats();
             }
         } catch (e) {
             console.error('Cyphur | Failed to load private chats:', e);
@@ -72,17 +81,50 @@ export class DataPersistence {
 
     static async savePrivateChats() {
         try {
-            await game.settings.set(MODULE_ID, 'privateChats', Object.fromEntries(DataStore.privateChats));
+            const userChats = Array.from(DataStore.privateChats.entries()).filter(([, chat]) => chat?.kind !== 'actor');
+            await game.settings.set(MODULE_ID, 'privateChats', Object.fromEntries(userChats));
         } catch (e) {
             console.error('Cyphur | Failed to save private chats:', e);
         }
     }
 
+    static async loadActorChats() {
+        try {
+            const migrated = DataStore.actorChats instanceof Map ? DataStore.actorChats : new Map();
+            const data = game.settings.get(MODULE_ID, 'actorChats') || {};
+            DataStore.actorChats = new Map([
+                ...migrated.entries(),
+                ...Object.entries(data)
+            ]);
+            for (const [key, chat] of DataStore.actorChats.entries()) {
+                chat.kind = 'actor';
+                chat.history = this.sanitizeHistory(chat.history ?? []);
+                if (!chat.actorId && String(key).startsWith('actor:')) {
+                    chat.actorId = String(key).replace(/^actor:/, '');
+                }
+            }
+            if (migrated.size > 0 || Object.keys(data).length > 0) {
+                await this.saveActorChats();
+            }
+        } catch (e) {
+            console.error('Cyphur | Failed to load actor chats:', e);
+        }
+    }
+
+    static async saveActorChats() {
+        try {
+            await game.settings.set(MODULE_ID, 'actorChats', Object.fromEntries(DataStore.actorChats));
+        } catch (e) {
+            console.error('Cyphur | Failed to save actor chats:', e);
+        }
+    }
+
     static async loadUnreadData() {
         try {
-            const data = game.settings.get(MODULE_ID, 'unreadData') || { counts: {}, lastRead: {} };
+            const data = game.settings.get(MODULE_ID, 'unreadData') || { counts: {}, lastRead: {}, lastActivity: {} };
             DataStore.unreadCounts = new Map(Object.entries(data.counts || {}));
             DataStore.lastRead = new Map(Object.entries(data.lastRead || {}));
+            DataStore.lastActivity = new Map(Object.entries(data.lastActivity || {}));
         } catch (e) {
             console.warn('Cyphur | Failed to load unread data:', e);
         }
@@ -92,7 +134,8 @@ export class DataPersistence {
         try {
             await game.settings.set(MODULE_ID, 'unreadData', {
                 counts: Object.fromEntries(DataStore.unreadCounts),
-                lastRead: Object.fromEntries(DataStore.lastRead)
+                lastRead: Object.fromEntries(DataStore.lastRead),
+                lastActivity: Object.fromEntries(DataStore.lastActivity)
             });
         } catch (e) {
             console.warn('Cyphur | Failed to save unread data:', e);

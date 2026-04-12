@@ -46,7 +46,10 @@ export class CyphurWindow extends HandlebarsApplicationMixin(ApplicationV2) {
         CyphurWindowUI.setupButtonImages(this.element);
         CyphurWindowUI.scrollToBottom(this.element);
         
-        const convId = this.options.groupId || DataManager.getPrivateChatKey(game.user.id, this.options.otherUserId);
+        const convId = this.options.groupId
+            || this.options.actorId
+                ? (this.options.groupId || DataManager.getActorChatKey(this.options.actorId))
+                : DataManager.getPrivateChatKey(game.user.id, this.options.otherUserId);
         const bg = DataManager.getEffectiveBackground(convId, game.user.id);
         CyphurWindowUI.applyBackground(this.element, bg);
         CyphurWindowUI.updateImagePreview(this.element, this._pendingImage);

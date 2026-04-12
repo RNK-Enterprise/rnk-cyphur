@@ -5,6 +5,9 @@
 
 import { DataStore } from './DataStore.js';
 import { DataUserUI } from './DataUserUI.js';
+import { ActorContacts } from './ActorContacts.js';
+import { Utils } from '../Utils.js';
+import { ConversationUtils } from './ConversationUtils.js';
 
 export class DataUtility {
     static createGroup(name, members) {
@@ -33,15 +36,25 @@ export class DataUtility {
     }
 
     static exportConversation(id, isGroup = false) {
-        const chat = isGroup ? DataStore.groupChats.get(id) : DataStore.privateChats.get(id);
+        const chat = isGroup ? DataStore.groupChats.get(id) : ConversationUtils.getConversation(id);
         if (!chat || !chat.history) return '';
+
         const lines = [];
-        const title = isGroup ? `Group: ${chat.name || 'Unknown'}` : 'Private Chat';
-        lines.push('═══════════════════════════════════════');
+        let title = 'Private Chat';
+        if (isGroup) {
+            title = `Group: ${chat.name || 'Unknown'}`;
+        } else if (chat.kind === 'actor' || String(id).startsWith('actor:')) {
+            const actorId = chat.actorId || String(id).replace(/^actor:/, '');
+            const actor = game.actors.get(actorId);
+            title = `Character: ${chat.actorName || actor?.name || 'Unknown'}`;
+        }
+
+        lines.push('════════════════════════════════════════');
         lines.push(`Cyphur Chat Export - ${title}`);
         lines.push(`Exported: ${new Date().toLocaleString()}`);
-        lines.push('═══════════════════════════════════════');
+        lines.push('════════════════════════════════════════');
         lines.push('');
+
         const sorted = [...chat.history].sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
         for (const msg of sorted) {
             const time = msg.timestamp ? new Date(msg.timestamp).toLocaleString() : 'Unknown';
@@ -52,13 +65,37 @@ export class DataUtility {
             if (msg.imageUrl) lines.push(`  [Image: ${msg.imageUrl}]`);
             lines.push('');
         }
-        lines.push('═══════════════════════════════════════');
+
+        lines.push('════════════════════════════════════════');
         return lines.join('\n');
     }
 
     static getUserConversations() {
         const userId = game.user.id;
         const convs = [];
+
+        for (const [key, chat] of DataStore.actorChats.entries()) {
+            const actorId = chat.actorId || String(key).replace(/^actor:/, '');
+            const actor = game.actors.get(actorId);
+            if (!actor || !ActorContacts.isVisibleToUser(actor, game.user)) continue;
+
+            convs.push({
+                id: key,
+                type: 'actor',
+                name: chat.actorName || actor.name || 'Unknown Actor',
+                avatar: chat.actorImg || actor.img,
+                color: Utils.getUserColor(actor.id),
+                initials: Utils.getUserInitials(chat.actorName || actor.name || 'A'),
+                isOnline: ActorContacts.getRecipientUserIds(actor).some(id => game.users.get(id)?.active),
+                actorId,
+                lastMessage: chat.history?.[chat.history.length - 1] || null,
+                unread: DataStore.unreadCounts.get(key) || 0,
+                isFavorite: DataStore.favorites.has(key),
+                isMuted: DataStore.mutedConversations.has(key),
+                lastActivity: DataStore.lastActivity.get(key) || 0
+            });
+        }
+
         for (const [key, chat] of DataStore.privateChats.entries()) {
             if (!chat.users?.includes(userId)) continue;
             const otherId = chat.users.find(id => id !== userId);
@@ -68,6 +105,8 @@ export class DataUtility {
                 type: 'private',
                 name: otherUser?.name || 'Unknown User',
                 avatar: otherUser?.avatar,
+                isOnline: otherUser?.active,
+                otherUserId: otherId,
                 lastMessage: chat.history?.[chat.history.length - 1] || null,
                 unread: DataStore.unreadCounts.get(key) || 0,
                 isFavorite: DataStore.favorites.has(key),
@@ -75,6 +114,7 @@ export class DataUtility {
                 lastActivity: DataStore.lastActivity.get(key) || 0
             });
         }
+
         for (const [id, group] of DataStore.groupChats.entries()) {
             if (!group.members?.includes(userId)) continue;
             convs.push({
@@ -89,6 +129,7 @@ export class DataUtility {
                 lastActivity: DataStore.lastActivity.get(id) || 0
             });
         }
+
         return convs.sort((a, b) => (b.isFavorite - a.isFavorite) || (b.lastActivity - a.lastActivity));
     }
 }

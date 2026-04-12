@@ -32,6 +32,13 @@
             {{otherUser.name}} - {{#if isOnline}}{{localize 'CYPHUR.Online'}}{{else}}{{localize 'CYPHUR.Offline'}}{{/if}}
         </span>
     </div>
+    {{else if otherActor}}
+    <div class="cyphur-status-bar">
+        <span class="cyphur-status-dot {{#if isOnline}}online{{else}}offline{{/if}}"></span>
+        <span class="cyphur-status-text">
+            {{otherActor.name}} - {{#if isOnline}}{{localize 'CYPHUR.Online'}}{{else}}{{localize 'CYPHUR.Offline'}}{{/if}}
+        </span>
+    </div>
     {{/if}}
     {{/unless}}
 

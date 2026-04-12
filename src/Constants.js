@@ -13,6 +13,8 @@ export const SOCKET_EVENTS = {
     GROUP_MESSAGE: 'groupMessage',
     CHANNEL_MESSAGE: 'channelMessage',
     TYPING: 'typing',
+    FRIEND_REQUEST: 'friendRequest',
+    FRIEND_RESPONSE: 'friendResponse',
     EDIT_MESSAGE: 'editMessage',
     DELETE_MESSAGE: 'deleteMessage',
     ADD_REACTION: 'addReaction',
@@ -81,4 +83,3 @@ export const STATUS = {
 // Supported image types for upload
 export const SUPPORTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 export const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
-

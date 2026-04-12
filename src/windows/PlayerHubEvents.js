@@ -16,7 +16,6 @@ export class PlayerHubEvents {
             tab.addEventListener('click', (e) => {
                 app.activeTab = e.currentTarget.dataset.tab;
                 this._updateTabs(element, app.activeTab);
-                Utils.playUISound('buttonPress');
             });
         });
 
@@ -38,6 +37,9 @@ export class PlayerHubEvents {
                     break;
                 case 'openGMTools':
                     UIManager.openGMModWindow();
+                    break;
+                case 'openActorChat':
+                    UIManager.openChatForActor(btn.dataset.actorId);
                     break;
                 case 'exportToJournal':
                     PlayerHubUtils.exportToJournal();
@@ -68,12 +70,14 @@ export class PlayerHubEvents {
                 }
 
                 if (type === 'group') UIManager.openGroupChat(convId);
+                else if (type === 'actor') UIManager.openChatForActor(item.dataset.actorId);
                 else UIManager.openChatFor(item.dataset.userId);
             });
         });
 
         // User selection in New Chat tab
         element.querySelectorAll('.cyphur-user-card').forEach(card => {
+            if (!card.dataset.userId) return;
             card.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -97,6 +101,14 @@ export class PlayerHubEvents {
                         startBtn.style.cursor = 'pointer';
                     }
                 }
+            });
+        });
+
+        element.querySelectorAll('.cyphur-actor-card').forEach(card => {
+            card.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                UIManager.openChatForActor(card.dataset.actorId);
             });
         });
 
@@ -126,6 +138,10 @@ export class PlayerHubEvents {
             });
             // Filter user cards
             element.querySelectorAll('.cyphur-user-card').forEach(card => {
+                const name = card.querySelector('.cyphur-user-name')?.textContent?.toLowerCase() || '';
+                card.style.display = name.includes(query) ? '' : 'none';
+            });
+            element.querySelectorAll('.cyphur-actor-card').forEach(card => {
                 const name = card.querySelector('.cyphur-user-name')?.textContent?.toLowerCase() || '';
                 card.style.display = name.includes(query) ? '' : 'none';
             });

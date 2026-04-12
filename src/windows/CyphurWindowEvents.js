@@ -46,19 +46,19 @@ export class CyphurWindowEvents {
 
         // Toolbar Button listeners
         element.querySelector('.cyphur-favorite-btn')?.addEventListener('click', (e) => {
-            const convId = app.options.groupId || DataManager.getPrivateChatKey(game.user.id, app.options.otherUserId);
+            const convId = app.options.groupId || app.options.actorId ? (app.options.groupId || DataManager.getActorChatKey(app.options.actorId)) : DataManager.getPrivateChatKey(game.user.id, app.options.otherUserId);
             DataManager.toggleFavorite(convId);
             app.render({force: true});
         });
 
         element.querySelector('.cyphur-mute-btn')?.addEventListener('click', (e) => {
-            const convId = app.options.groupId || DataManager.getPrivateChatKey(game.user.id, app.options.otherUserId);
+            const convId = app.options.groupId || app.options.actorId ? (app.options.groupId || DataManager.getActorChatKey(app.options.actorId)) : DataManager.getPrivateChatKey(game.user.id, app.options.otherUserId);
             DataManager.toggleMuted(convId);
             app.render({force: true});
         });
 
         element.querySelector('.cyphur-export-btn')?.addEventListener('click', async (e) => {
-            const convId = app.options.groupId || DataManager.getPrivateChatKey(game.user.id, app.options.otherUserId);
+            const convId = app.options.groupId || app.options.actorId ? (app.options.groupId || DataManager.getActorChatKey(app.options.actorId)) : DataManager.getPrivateChatKey(game.user.id, app.options.otherUserId);
             const content = DataManager.exportConversation(convId, !!app.options.groupId);
             const filename = `cyphur-chat-${convId}.txt`;
             const blob = new Blob([content], { type: 'text/plain' });
@@ -73,7 +73,7 @@ export class CyphurWindowEvents {
         });
 
         element.querySelector('.cyphur-background-btn')?.addEventListener('click', () => {
-            const convId = app.options.groupId || DataManager.getPrivateChatKey(game.user.id, app.options.otherUserId);
+            const convId = app.options.groupId || app.options.actorId ? (app.options.groupId || DataManager.getActorChatKey(app.options.actorId)) : DataManager.getPrivateChatKey(game.user.id, app.options.otherUserId);
             const current = (game.settings.get(MODULE_ID, 'chatBackgrounds') || {})[convId] || '';
             new FilePicker({
                 type: 'image',
@@ -97,7 +97,7 @@ export class CyphurWindowEvents {
 
     static _onTyping(app) {
         const now = Date.now();
-        const convId = app.options.groupId || DataManager.getPrivateChatKey(game.user.id, app.options.otherUserId);
+        const convId = app.options.groupId || app.options.actorId ? (app.options.groupId || DataManager.getActorChatKey(app.options.actorId)) : DataManager.getPrivateChatKey(game.user.id, app.options.otherUserId);
         if (now - app._lastTypingEmit > 2000) {
             app._lastTypingEmit = now;
             SocketHandler.sendTypingIndicator(convId, true, !!app.options.groupId);

@@ -8,10 +8,9 @@ import { DataManager } from '../DataManager.js';
 
 export class PlayerHubData {
     static async getHubContext(activeTab) {
-        const currentUser = game.user;
-        const conversations = this._getConversations(currentUser);
-        const users = this._getUsers(currentUser);
-        
+        const conversations = this._getConversations();
+        const users = this._getUsers(game.user);
+        const actors = DataManager.getVisibleActors();
         const settings = this._getSettings();
 
         return {
@@ -19,6 +18,7 @@ export class PlayerHubData {
             users: users.all,
             gmUsers: users.gms,
             playerUsers: users.players,
+            actorFriends: actors,
             isGM: game.user.isGM,
             totalUnread: DataManager.getTotalUnread() || 0,
             activeTab: activeTab,
@@ -29,60 +29,35 @@ export class PlayerHubData {
         };
     }
 
-    static _getConversations(currentUser) {
+    static _getConversations() {
         const convs = [];
-        const groupChats = DataManager.groupChats;
-        const privateChats = DataManager.privateChats;
+        const all = DataManager.getUserConversations();
 
-        if (groupChats) {
-            for (const group of groupChats.values()) {
-                if (!group.members?.includes(currentUser.id)) continue;
-                const unread = DataManager.getUnreadCount?.(group.id) || 0;
-                const lastMsg = group.history?.slice(-1)[0];
-                convs.push({
-                    id: group.id,
-                    name: group.name,
-                    type: 'group',
-                    icon: 'fa-users',
-                    unreadCount: unread,
-                    hasUnread: unread > 0,
-                    isFavorite: DataManager.isFavorite?.(group.id),
-                    lastActivity: lastMsg?.timestamp || group.createdAt || 0,
-                    lastMessage: lastMsg ? {
-                        preview: this._getMessagePreview(lastMsg),
-                        time: this._formatRelativeTime(lastMsg.timestamp)
-                    } : null
-                });
-            }
-        }
-
-        if (privateChats) {
-            for (const chat of privateChats.values()) {
-                if (!chat.users?.includes(currentUser.id)) continue;
-                const otherId = chat.users.find(id => id !== currentUser.id);
-                const otherUser = game.users.get(otherId);
-                if (!otherUser) continue;
-                const key = DataManager.getPrivateChatKey?.(chat.users[0], chat.users[1]);
-                const unread = DataManager.getUnreadCount?.(key) || 0;
-                const lastMsg = chat.history?.slice(-1)[0];
-                convs.push({
-                    id: key,
-                    name: otherUser.name,
-                    type: 'private',
-                    icon: 'fa-user-secret',
-                    unreadCount: unread,
-                    hasUnread: unread > 0,
-                    isFavorite: DataManager.isFavorite?.(key),
-                    isOnline: otherUser.active,
-                    avatar: otherUser.avatar,
-                    otherUserId: otherId,
-                    lastActivity: lastMsg?.timestamp || 0,
-                    lastMessage: lastMsg ? {
-                        preview: this._getMessagePreview(lastMsg),
-                        time: this._formatRelativeTime(lastMsg.timestamp)
-                    } : null
-                });
-            }
+        for (const conv of all) {
+            convs.push({
+                id: conv.id,
+                name: conv.name,
+                type: conv.type,
+                icon: conv.type === 'group'
+                    ? 'fa-users'
+                    : conv.type === 'actor'
+                        ? 'fa-dragon'
+                        : 'fa-user-secret',
+                unreadCount: conv.unread || 0,
+                hasUnread: (conv.unread || 0) > 0,
+                isFavorite: conv.isFavorite,
+                lastActivity: conv.lastActivity || 0,
+                lastMessage: conv.lastMessage ? {
+                    preview: this._getMessagePreview(conv.lastMessage),
+                    time: this._formatRelativeTime(conv.lastMessage.timestamp)
+                } : null,
+                isOnline: conv.isOnline,
+                avatar: conv.avatar,
+                color: conv.color,
+                initials: conv.initials,
+                otherUserId: conv.otherUserId,
+                otherActorId: conv.actorId
+            });
         }
 
         return convs.sort((a, b) => (b.isFavorite - a.isFavorite) || (b.lastActivity - a.lastActivity));
@@ -97,7 +72,8 @@ export class PlayerHubData {
                 isOnline: u.active,
                 isGM: u.isGM,
                 avatar: u.avatar,
-                color: u.color || '#cccccc'
+                color: u.color || '#cccccc',
+                initials: u.name ? u.name.substring(0, 2).toUpperCase() : '?'
             }))
             .sort((a, b) => b.isOnline - a.isOnline || a.name.localeCompare(b.name));
             

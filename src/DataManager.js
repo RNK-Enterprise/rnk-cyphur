@@ -10,9 +10,12 @@ import { DataMessaging } from './data/DataMessaging.js';
 import { DataUserUI } from './data/DataUserUI.js';
 import { DataUtility } from './data/DataUtility.js';
 import { DataImaging } from './data/DataImaging.js';
+import { ActorContacts } from './data/ActorContacts.js';
+import { ConversationUtils } from './data/ConversationUtils.js';
 
 export class DataManager {
     static get privateChats() { return DataStore.privateChats; }
+    static get actorChats() { return DataStore.actorChats; }
     static get groupChats() { return DataStore.groupChats; }
     static get unreadCounts() { return DataStore.unreadCounts; }
     static get lastActivity() { return DataStore.lastActivity; }
@@ -23,9 +26,10 @@ export class DataManager {
     static get interceptedMessages() { return DataStore.interceptedMessages; }
 
     static async loadAll() {
+        await DataPersistence.loadGroupChats();
+        await DataPersistence.loadPrivateChats();
+        await DataPersistence.loadActorChats();
         await Promise.all([
-            DataPersistence.loadGroupChats(),
-            DataPersistence.loadPrivateChats(),
             DataPersistence.loadUnreadData(),
             DataPersistence.loadFavorites(),
             DataPersistence.loadMutedConversations(),
@@ -39,13 +43,21 @@ export class DataManager {
 
     static async saveGroupChats() { return DataPersistence.saveGroupChats(); }
     static async savePrivateChats() { return DataPersistence.savePrivateChats(); }
+    static async saveActorChats() { return DataPersistence.saveActorChats(); }
     static async saveUnreadData() { return DataPersistence.saveUnreadData(); }
     static async saveFavorites() { return DataPersistence.saveFavorites(); }
 
     static getPrivateChatKey(u1, u2) { return DataMessaging.getPrivateChatKey(u1, u2); }
+    static getActorChatKey(actorId) { return DataMessaging.getActorChatKey(actorId); }
+    static getConversation(id) { return ConversationUtils.getConversation(id); }
+    static getConversationType(id) { return ConversationUtils.getConversationType(id); }
     static addPrivateMessage(u1, u2, d) { 
         DataMessaging.addPrivateMessage(u1, u2, d);
         DataManager.updateActivity(DataMessaging.getPrivateChatKey(u1, u2));
+    }
+    static addActorMessage(actorId, d) {
+        DataMessaging.addActorMessage(actorId, d);
+        DataManager.updateActivity(DataMessaging.getActorChatKey(actorId));
     }
     static addGroupMessage(id, d) { 
         DataMessaging.addGroupMessage(id, d);
@@ -67,7 +79,10 @@ export class DataManager {
     static setReplyTo(m) { DataUserUI.setReplyTo(m); }
     static getReplyTo() { return DataUserUI.getReplyTo(); }
     static clearReplyTo() { DataUserUI.clearReplyTo(); }
-    static updateActivity(id) { DataStore.lastActivity.set(id, Date.now()); }
+    static updateActivity(id) {
+        DataStore.lastActivity.set(id, Date.now());
+        DataPersistence.saveUnreadData();
+    }
     
     static toggleFavorite(id) { DataUserUI.toggleFavorite(id); }
     static isFavorite(id) { return DataStore.favorites.has(id); }
@@ -83,6 +98,9 @@ export class DataManager {
     static updateGroup(id, u) { return DataUtility.updateGroup(id, u); }
     static deleteGroup(id) { return DataUtility.deleteGroup(id); }
     static getUserConversations() { return DataUtility.getUserConversations(); }
+    static getVisibleActors() { return ActorContacts.getVisibleActors(); }
+    static getActorRecipients(actor) { return ActorContacts.getRecipientUserIds(actor); }
+    static acceptActorFriendRequest(actorId, requesterUserId) { return ActorContacts.acceptFriendRequest(actorId, requesterUserId); }
     static exportConversation(id, g) { return DataUtility.exportConversation(id, g); }
     
     static async processImage(d) { return DataImaging.processImage(d); }

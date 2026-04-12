@@ -16,9 +16,11 @@ export class CyphurWindowActions {
             if (actor) speakerData = { name: actor.name, img: actor.img };
         }
 
-        const { groupId, otherUserId } = app.options;
+        const { groupId, otherUserId, actorId } = app.options;
         if (groupId) {
             await RNKCyphur.sendGroupMessage(groupId, message, speakerData, imageUrl);
+        } else if (actorId) {
+            await RNKCyphur.sendActorMessage(actorId, message, speakerData, imageUrl);
         } else {
             await RNKCyphur.sendMessage(otherUserId, message, speakerData, imageUrl);
         }
@@ -28,7 +30,7 @@ export class CyphurWindowActions {
     }
 
     static async editMessage(convId, msgId, isGroup) {
-        const chat = isGroup ? DataManager.groupChats.get(convId) : DataManager.privateChats.get(convId);
+        const chat = isGroup ? DataManager.groupChats.get(convId) : DataManager.getConversation(convId);
         const msg = chat?.history?.find(m => m.id === msgId);
         if (!msg) return;
 

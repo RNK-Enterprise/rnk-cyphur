@@ -6,6 +6,7 @@
 import { DEFAULTS } from '../Constants.js';
 import { DataStore } from './DataStore.js';
 import { DataPersistence } from './DataPersistence.js';
+import { ConversationUtils } from './ConversationUtils.js';
 
 export class DataImaging {
     static async processImage(data) {
@@ -39,7 +40,7 @@ export class DataImaging {
     }
 
     static addReaction(convId, msgId, emoji, userId, isGroup = false) {
-        const chat = isGroup ? DataStore.groupChats.get(convId) : DataStore.privateChats.get(convId);
+        const chat = isGroup ? DataStore.groupChats.get(convId) : ConversationUtils.getConversation(convId);
         if (!chat) return false;
         const msg = (chat.history || []).find(m => m.id === msgId);
         if (!msg) return false;

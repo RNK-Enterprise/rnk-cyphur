@@ -9,12 +9,10 @@ import { DataManager } from '../DataManager.js';
 export class PlayerHubUtils {
     static async exportToJournal() {
         let content = `<h1>Cyphur Chat Export</h1><p>Exported: ${new Date().toLocaleString()}</p><hr>`;
-        
-        for (const chat of DataManager.privateChats.values()) {
-            if (!chat.users?.includes(game.user.id)) continue;
-            const other = game.users.get(chat.users.find(id => id !== game.user.id));
-            content += `<h2>Chat with ${other?.name || 'Unknown'}</h2>`;
-            content += this._formatExport(chat.history);
+
+        for (const section of this._getExportSections()) {
+            content += `<h2>${section.title}</h2>`;
+            content += this._formatExport(section.history);
         }
         
         await JournalEntry.create({
@@ -28,12 +26,10 @@ export class PlayerHubUtils {
         let content = `RNK Cyphur Chat Export - ${new Date().toLocaleString()}\n`;
         content += "========================================\n\n";
 
-        for (const chat of DataManager.privateChats.values()) {
-            if (!chat.users?.includes(game.user.id)) continue;
-            const other = game.users.get(chat.users.find(id => id !== game.user.id));
-            content += `Chat with ${other?.name || 'Unknown'}\n`;
-            if (chat.history) {
-                chat.history.forEach(m => {
+        for (const section of this._getExportSections()) {
+            content += `${section.title}\n`;
+            if (section.history) {
+                section.history.forEach(m => {
                     const time = new Date(m.timestamp).toLocaleTimeString();
                     content += `[${time}] ${m.senderName}: ${m.messageContent}\n`;
                 });
@@ -61,6 +57,44 @@ export class PlayerHubUtils {
             h += `<li>[${time}] <strong>${m.senderName}:</strong> ${m.messageContent}</li>`;
         }
         return h + '</ul>';
+    }
+
+    static _getExportSections() {
+        return [
+            ...this._getActorExportSections(),
+            ...this._getPrivateExportSections()
+        ];
+    }
+
+    static _getActorExportSections() {
+        const visibleActorIds = new Set(DataManager.getVisibleActors().map(actor => actor.id));
+        const sections = [];
+
+        for (const chat of DataManager.actorChats.values()) {
+            const actor = game.actors.get(chat.actorId);
+            if (!actor || !visibleActorIds.has(actor.id)) continue;
+            sections.push({
+                title: `Character Chat with ${chat.actorName || actor.name || 'Unknown'}`,
+                history: chat.history || []
+            });
+        }
+
+        return sections;
+    }
+
+    static _getPrivateExportSections() {
+        const sections = [];
+
+        for (const chat of DataManager.privateChats.values()) {
+            if (!chat.users?.includes(game.user.id)) continue;
+            const other = game.users.get(chat.users.find(id => id !== game.user.id));
+            sections.push({
+                title: `Chat with ${other?.name || 'Unknown'}`,
+                history: chat.history || []
+            });
+        }
+
+        return sections;
     }
 
     static async setGlobalBackground() {

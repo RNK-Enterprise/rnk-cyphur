@@ -5,6 +5,7 @@
 
 export class DataStore {
     static privateChats = new Map();
+    static actorChats = new Map();
     static groupChats = new Map();
     static interceptedMessages = [];
     static unreadCounts = new Map();

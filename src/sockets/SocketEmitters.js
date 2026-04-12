@@ -5,6 +5,7 @@
 
 import { SOCKET_EVENTS, SOCKET_NAME } from '../Constants.js';
 import { DataManager } from '../DataManager.js';
+import { ActorContacts } from '../data/ActorContacts.js';
 
 export class SocketEmitters {
     static emit(type, payload, options = {}) {
@@ -28,6 +29,40 @@ export class SocketEmitters {
         }
     }
 
+    static sendActorMessage(actorId, message) {
+        const actor = game.actors.get(actorId);
+        if (!actor) return;
+
+        const recipients = ActorContacts.getRecipientUserIds(actor);
+        if (!recipients.length) return;
+
+        this.emit(SOCKET_EVENTS.PRIVATE_MESSAGE, {
+            recipientId: actorId,
+            targetType: 'actor',
+            targetId: actorId,
+            conversationId: DataManager.getActorChatKey(actorId),
+            actorName: actor.name,
+            actorImg: actor.img,
+            message
+        }, { recipients });
+
+        const gms = game.users.filter(u => u.isGM && u.active && !recipients.includes(u.id));
+        if (gms.length > 0) {
+            this.emit(SOCKET_EVENTS.PRIVATE_MESSAGE, {
+                recipientId: actorId,
+                targetType: 'actor',
+                targetId: actorId,
+                conversationId: DataManager.getActorChatKey(actorId),
+                actorName: actor.name,
+                actorImg: actor.img,
+                message,
+                isMonitoring: true,
+                originalSenderId: game.user.id,
+                originalRecipientId: actorId
+            }, { recipients: gms.map(u => u.id) });
+        }
+    }
+
     static sendGroupMessage(groupId, message) {
         const group = DataManager.groupChats.get(groupId);
         if (!group) return;
@@ -45,6 +80,10 @@ export class SocketEmitters {
         let recipients = [];
         if (isGroup) {
             recipients = DataManager.groupChats.get(conversationId)?.members || [];
+        } else if (conversationId.startsWith('actor:')) {
+            const actorId = conversationId.replace(/^actor:/, '');
+            const actor = game.actors.get(actorId);
+            recipients = actor ? ActorContacts.getRecipientUserIds(actor) : [];
         } else {
             recipients = conversationId.split('-').filter(id => id !== game.user.id);
         }
@@ -53,39 +92,11 @@ export class SocketEmitters {
         this.emit(SOCKET_EVENTS.TYPING, { conversationId, userId: game.user.id, isTyping, isGroup }, { recipients });
     }
 
-    static broadcastGroupCreate(group) {
-        if (!group) return;
-        this.emit(SOCKET_EVENTS.GROUP_CREATE, { group });
+    static sendFriendRequest(payload, recipients) {
+        this.emit(SOCKET_EVENTS.FRIEND_REQUEST, payload, { recipients });
     }
 
-    static broadcastGroupUpdate(groupId, group) {
-        if (!groupId || !group) return;
-        this.emit(SOCKET_EVENTS.GROUP_UPDATE, { groupId, group });
-    }
-
-    static broadcastGroupDelete(groupId, members = []) {
-        if (!groupId) return;
-        this.emit(SOCKET_EVENTS.GROUP_DELETE, { groupId, members });
-    }
-
-    static broadcastEditMessage(conversationId, messageId, newContent, isGroup = false) {
-        if (!conversationId || !messageId) return;
-        this.emit(SOCKET_EVENTS.EDIT_MESSAGE, { conversationId, messageId, newContent, isGroup });
-    }
-
-    static broadcastDeleteMessage(conversationId, messageId, isGroup = false) {
-        if (!conversationId || !messageId) return;
-        this.emit(SOCKET_EVENTS.DELETE_MESSAGE, { conversationId, messageId, isGroup });
-    }
-
-    static broadcastReaction(conversationId, messageId, emoji, isGroup = false) {
-        if (!conversationId || !messageId || !emoji) return;
-        this.emit(SOCKET_EVENTS.ADD_REACTION, {
-            conversationId,
-            messageId,
-            emoji,
-            isGroup,
-            userId: game.user.id
-        });
+    static sendFriendResponse(payload, recipients) {
+        this.emit(SOCKET_EVENTS.FRIEND_RESPONSE, payload, { recipients });
     }
 }

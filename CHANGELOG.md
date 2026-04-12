@@ -1,13 +1,22 @@
 # Changelog
 
-## 1.2.9 - 2026-04-01
+## 1.3.0 - 2026-04-12
 
-- Fixed missing socket emitter and listener paths for group and message sync.
-- Repaired the Group Manager action wiring and template/controller contract.
-- Added working local validation tooling to keep manifest and package metadata aligned.
-- Updated compatibility metadata to Foundry VTT v13.
-- Added player hub bottom-button press sound feedback.
+### Added
+- Actor and NPC conversation support alongside player-to-player chats.
+- A lightweight friend-request flow for actor messaging.
+- Separate actor chat storage and GM moderation views.
+- Ready-to-use macros for actor friendship and direct actor chat access.
 
-## 1.2.8
+### Changed
+- Split actor conversations out of private user chats for cleaner persistence and moderation.
+- Added a shared conversation lookup helper to reduce branching across the data layer.
+- Persisted conversation `lastActivity` so hub ordering stays stable after reloads.
 
-- Previous release.
+### Fixed
+- Actor recipients now resolve correctly so accepted characters can actually receive messages.
+- GM moderation clear/delete actions now target the correct conversation type.
+- Circular imports in the data layer were removed.
+
+### Notes
+- Verified against Foundry VTT v11 through v13 compatibility paths.
